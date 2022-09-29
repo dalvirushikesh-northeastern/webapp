@@ -1,0 +1,32 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a simple example NodeJS API project to demonstrate Swagger Documentation",
+        "title": "CSYE 6225 - Cloud Native Web Application"
+        
+    },
+    "schemes": ["http"],
+    "host": "localhost:3000",
+    "basePath": "/api",
+    "paths" : {
+        "/healthz" : {
+            "get" : {
+                "summary" : "Get all the tasks",
+                "description": "Get all the tasks",
+                "produces": ["application/json"],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Server responds with 200 OK if its healthy. "
+                    },
+                    "400": {
+                        "description": "Invalid status value"
+                        
+                    }
+                }
+            }
+        }  
+                   
+    }
+   
+}
