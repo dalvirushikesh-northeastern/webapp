@@ -1,18 +1,17 @@
-const express = require('express');
-const randomId = require('random-id');
-const app = express(),
-      bodyParser = require("body-parser"),
-      fs = require('fs'),
-      port = 3000;
 
+const express = require('express');
+const app = express();
+const apidbRoutes = require("./routes/calls");  
+const bodyParser = require("body-parser");
 
 app.use(bodyParser.json());
-app.get('/api/healthz', (req, res) => { 
- 
-  res.send("200 OK");
-});
+app.use(apidbRoutes);
+    
 
 
+
+//setting port 
+const port = process.env.PORT || 3000;
 app.listen(port, () => {
     console.log(`Server listening on the port::::::${port}`);
 });

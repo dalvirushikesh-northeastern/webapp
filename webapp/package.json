@@ -10,7 +10,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^5.0.1",
+    "bcryptjs": "^2.4.3",
     "express": "^4.17.1",
+    "express-basic-auth": "^1.2.1",
+    "mysql2": "^2.3.3",
     "random-id": "^1.0.4",
     "swagger-jsdoc": "^4.3.2",
     "swagger-ui-express": "^4.5.0"
