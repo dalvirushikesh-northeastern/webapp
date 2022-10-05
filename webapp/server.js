@@ -7,9 +7,9 @@ const app = express(),
 
 
 app.use(bodyParser.json());
-app.get('/api/healthz', (req, res) => {
-  console.log('api/healthcheck called!!')
-  res.json(tasks);
+app.get('/api/healthz', (req, res) => { 
+ 
+  res.send("200 OK");
 });
 
 

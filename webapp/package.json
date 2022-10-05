@@ -4,7 +4,7 @@
   "description": "Web Application for Cloud ",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon ./server.js localhost 3080",
+    "dev": "nodemon ./server.js localhost 3000",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
