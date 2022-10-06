@@ -16,6 +16,7 @@
     "express-basic-auth": "^1.2.1",
     "mysql2": "^2.3.3",
     "random-id": "^1.0.4",
+    "regex": "^0.1.1",
     "swagger-jsdoc": "^4.3.2",
     "swagger-ui-express": "^4.5.0"
   },
