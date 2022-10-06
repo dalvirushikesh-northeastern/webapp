@@ -8,21 +8,21 @@ const basicAuth = require("express-basic-auth");
 app.use(basicAuth);
 
 
-//Testing Basic Auth 
-//Trial
-function authentication(req, res) {
-    var authheader = req.headers.authorization;
-    // console.log(req.headers);
-    console.log(authheader);
+
+//Function for authnetication using basic auth npm 
+function Basicauthentication(req, res) {
+    var head = req.headers.authorization;
   
-    if (!authheader) {
-      var err = new Error("You are not authenticated!");
+    console.log(head);
+  
+    if (!head) {
+      var err = new Error("Not authenticated!");
       res.setHeader("WWW-Authenticate", "Basic");
       err.status = 401;
       return next(err);
     }
   
-    var auth = new Buffer.from(authheader.split(" ")[1], "base64")
+    var auth = new Buffer.from(head.split(" ")[1], "base64")
       .toString()
       .split(":");
     console.log(auth);
@@ -33,8 +33,6 @@ function authentication(req, res) {
     return auth;
   
   }
-
-
 
 con.get('/healthz', (req, res) => {
     
@@ -72,38 +70,13 @@ con.post("/v1/account", async(req, res)=>{
     })
    });
 
-//    function select_user(user, res) {
-    
-  
-//     let selectQuery = 'SELECT ??, ??, ??, ?? FROM ?? WHERE ?? = ?';    
-  
-//     let query = mysql.format(selectQuery,["first_name","last_name","account_created","account_updated","users","username",user]);
-  
-//     connection.query(query,(err, data) => {
-  
-//         if(err) {
-  
-//             res.status(400).send(err)
-  
-//             return;
-  
-//         }
-  
-//         // rows fetch
-//         res.status(200)
-  
-//         res.json(data[0])
-  
-//     });
-  
-//   }
 
 
 
-//working get 
+//working get  with authorization
   con.get("/v1/account/:id", async(req, res)=>{
 
-    auth = authentication(req);
+    auth = Basicauthentication(req);
     var user = auth[0];
     var pass = auth[1];
     console.log(user);
@@ -181,59 +154,6 @@ async function update_user(data, res) {
   
   }
 
-
-   
-// // api to update the previous user
-//    app.put("/v1/account/:id", async(req, res) => {
-//     let qb = req.body;
-//     let hash = await bcrypt.hash(qb.password, 10)
-
-//     const sql =
-  
-//       "SET @id = ?;SET @first_name = ?;SET @last_name = ?;SET @password = ?;SET @username = ?; UPDATE apidb.users SET  first_name = @first_name, last_name = @last_name,  password = @password, username = @username,  account_updated = now() WHERE ID = @ID COLLATE utf8mb4_unicode_ci;";
-  
-//     connection.query(
-  
-//       sql,
-  
-//       [req.params.id, qb.first_name, qb.last_name, hash, qb.username],
-  
-//       (err, response, fields) => {
-//         if(err) {
-  
-//             console.error(err);
-  
-//             res.status(400).send(err)
-  
-//             return;
-  
-//         }
-  
-//         // rows updated
-  
-//         console.log(response.affectedRows);
-  
-//         if(response.affectedRows < 1){
-  
-//           res.status(400).send("User not found")
-  
-//           return;
-  
-//         }
-  
-//         res.status(200).send("Updated User")
-  
-        
-  
-//       }
-  
-//     );
-  
-//   });
-
-//
-
-
 async function checkPass(data, res) {
 
     let Pass = data.password;
@@ -288,15 +208,56 @@ async function checkPass(data, res) {
 
 
 
-con.put('/v1/account', (req, res) => {
 
-    if (checkPass(req.body, res)){
-  
-      update_user(req.body, res);
-  
-    }
-  
-  })
+
+con.put("/v1/account/:id", async (req, res) => {
+    auth = Basicauthentication(req);
+    var user = auth[0];
+    var pass = auth[1];
+    const { username, password } = req.body;
+    const hash = await bcrypt.hash(password, 10);
+
+    const updatequery =
+    
+    "SET @id = ?;SET @first_name = ?;SET @last_name = ?;SET @password = ? UPDATE users SET  first_name = @first_name, last_name = @last_name,  password = @password, account_updated = now() WHERE ID = @id and username=@username ;";
+
+ 
+    let qb = req.body;
+    connection.query(
+      "SELECT first_name, last_name, password, username, account_created, account_updated FROM users WHERE id= ? and username= ?",
+      [req.params.id, user],
+      (err, results, fields) => {
+        if (results[0]) {
+          const p = results[0].password || null;
+          const validPass = bcrypt.compareSync(pass, p);
+          if (validPass) {
+            connection.query(
+                updatequery,
+                //"SET @id = ?;SET @first_name = ?;SET @last_name = ?;SET @password = ?;SET @username = ?; UPDATE apidb.users SET  first_name = @first_name, last_name = @last_name,  password = @password, username = @username,  account_updated = now() WHERE ID = @ID; SELECT * FROM users WHERE ID = @ID;",
+              [req.params.id, qb.first_name, qb.last_name, qb.password, qb.username],
+              (err, results, fields) => {
+                res.send("User Data Updated!!");
+              }
+            );
+          } else {
+            res.status(401).send("Unauthorized");
+          }
+        } else {
+          console.log(err);
+          res.status(403).send("Forbidden");
+        }
+      }
+    );
+  });
+
+
+
+
+
+
+
+
+
 
 
  //delete data api
@@ -315,9 +276,5 @@ con.put('/v1/account', (req, res) => {
    
 //     })
 //    });
-
-
-
-
 
   module.exports = con;
