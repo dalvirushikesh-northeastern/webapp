@@ -14,3 +14,5 @@ check application on : http://localhost:3000/api-docs/
 terminal check with curl:
 
 curl -v http://localhost:3000/api-docs/
+
+testing flow 1
