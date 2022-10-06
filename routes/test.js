@@ -21,11 +21,12 @@ function Basicauthentication(req, res, next) {
   return auth;
 }
 
-//Health check
+//Health check point 
 con.get("/healthz", (req, res) => {
   res.status(200).send();
 });
 
+// get user
 con.get("/v1/account/:id", (req, res) => {
   auth = Basicauthentication(req, res);
   var user = auth[0];
