@@ -18,5 +18,7 @@ terminal check with curl:
 
 curl -v http://localhost:3000/healthz
 
+
 testing flow 1
 testing flow 2
+
