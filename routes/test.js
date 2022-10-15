@@ -86,63 +86,6 @@ con.get("/v1/account/:id", async (req, res) => {
 
 
 
-// con.put("/v1/account/:id", async (req, res) => {
-//   // Checking payload here 
-//   const bodyfields = req.body;
-//   const hash = await bcrypt.hash(req.body.password, 10);
-//   const updatedhash = hash;
-//   for (let x in bodyfields) {
-//     if (
-//       x != "first_name" &&
-//       x != "last_name" &&
-//       x != "password" &&
-//       x != "username"
-//     ) {
-//       return res.status(400).send("Bad Request");
-//     }
-//   }
-
-//   auth = Basicauthentication(req, res);
-//   var user = auth[0];
-//   var pass = auth[1];
-
-//   await User.findOne({
-//     where: {
-//       username: user,
-//     },
-//   })
-//     .then((dbAcc) => {
-//       if (dbAcc) {
-//         const validPass = bcrypt.compareSync(pass, dbAcc.password);
-//         if (validPass) {
-//           if (req.params.id === dbAcc.id) {
-//             User.update(req.body.password =updatedhash, {
-//               where: {
-//                 username: user,
-//               },
-//             }).then((dbAccc) => {
-//               return res.status(200).send(dbAccc);
-//             });
-//           } else {
-//             return res.status(403).send("Forbidden");
-//           }
-//         } else {
-//           return res.status(401).send("Unauthorized");
-//         }
-//       } else {
-//         return res.status(401).send("Unauthorized");
-//       }
-//     })
-//     .catch((err) => {
-//       if (err) {
-//         console.log(err);
-//         return res.status(400).send("Bad Request");
-//       }
-//     });
-//   });
-
-
-
 
 
 con.put("/v1/account/:id", async (req, res) => {
