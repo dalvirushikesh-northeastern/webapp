@@ -116,7 +116,16 @@ con.put("/v1/account/:id", async (req, res) => {
         const validPass = bcrypt.compareSync(pass, dbAcc.password);
         if (validPass) {
           if (req.params.id === dbAcc.id) {
-            User.update(req.body, {
+            const Hpassword = req.body.password || pass
+            const first = req.body.first_name || dbAcc.first_name
+            const last = req.body.last_name || dbAcc.last_name
+            
+            const hash =  bcrypt.hashSync(Hpassword, 10);
+            User.update({
+              first_name: first,
+                last_name: last,
+                password: hash},
+              {
               where: {
                 username: user,
               },

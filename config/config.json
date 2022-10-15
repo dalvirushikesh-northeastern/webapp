@@ -4,7 +4,8 @@
     "password" : "California@12",
     "database" : "apidb",
     "host"     : "localhost",
-    "dialect": "mysql"
+    "dialect": "mysql",
+    "timezone": "+08:00"
   },
   "test": {
     "username": "root",
