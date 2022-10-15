@@ -2,6 +2,7 @@ var flow = require("chai");
 
 chaiHttp = require("chai-http");
 
+let app = require("./server")
 flow.use(chaiHttp);
 
 var expect = flow.expect;
@@ -10,9 +11,9 @@ describe("Account", () => {
 
   it("test1", () => {
 
-    chai
+    flow
 
-      .request("http://localhost:3000")
+      .request(app)
 
       .get("/healthz")
 
