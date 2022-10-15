@@ -30,17 +30,17 @@ con.get("/healthz", (req, res) => {
 
 //get user data with sequalize 
 con.get("/v1/account/:id", async (req, res) => {
+  try{
   auth = Basicauthentication(req, res);
   var userName = auth[0];
   var passWord = auth[1];
-  await User.findOne({
+   const userr = await User.findOne({
     where: {
       username: userName,
     },
-  })
-    .then((dbAcc) => {
-      if (dbAcc) {
-        const validPass = bcrypt.compareSync(passWord, dbAcc.password);
+  });
+      if (userr) {
+        const validPass = bcrypt.compareSync(passWord, userr.password);
         if (validPass) {
           if (req.params.id === dbAcc.id) {
             return res.status(200).send(dbAcc);
@@ -53,34 +53,34 @@ con.get("/v1/account/:id", async (req, res) => {
       } else {
         return res.status(401).send("Unauthorized");
       }
-    })
-    .catch((err) => {
-      if (err) {
+    }
+    catch(err) {
+      
         console.log(err);
         return res.status(400).send("Bad Request");
-      }
+    }
     });
-});
+
 
 
 
    con.post("/v1/account", async (req, res) => {
+    try{
     const hash = await bcrypt.hash(req.body.password, 10);
-    await User.create({
+    const newuser = await User.create({
       first_name: req.body.first_name,
       last_name: req.body.last_name,
       username: req.body.username,
       password: hash,
-    })
-      .then((Acco) => {
-        Acco.password = undefined;
-        return res.status(201).send(Acco);
-      })
-      .catch((err) => {
-        if (err) {
-          return res.status(400).send("Bad Request");
+    });
+      
+    newuser.password = undefined;
+        return res.status(201).send(newuser);
+      }
+      catch(err) {
+      
+          return res.status(400).send(err);
         }
-      });
   });
 
 
