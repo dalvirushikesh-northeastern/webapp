@@ -90,7 +90,8 @@ con.get("/v1/account/:id", async (req, res) => {
 
 
 con.put("/v1/account/:id", async (req, res) => {
-  // Check if input payload contains any other fields than the editable fields
+  // Checking  any other fields than the editable fields
+  try{
   const bodyfields = req.body;
   for (let x in bodyfields) {
     if (
@@ -107,13 +108,13 @@ con.put("/v1/account/:id", async (req, res) => {
   var user = auth[0];
   var pass = auth[1];
 
-  await User.findOne({
+ const dbAcc = await User.findOne({
     where: {
       username: user,
     },
-  })
-    .then((dbAcc) => {
-      if (dbAcc) {
+  });
+    if(dbAcc) {
+     
         const validPass = bcrypt.compareSync(pass, dbAcc.password);
         if (validPass) {
           if (req.params.id === dbAcc.id) {
@@ -122,7 +123,7 @@ con.put("/v1/account/:id", async (req, res) => {
             const last = req.body.last_name || dbAcc.last_name
             
             const hash =  bcrypt.hashSync(Hpassword, 10);
-            User.update({
+            const Accu = await User.update({
               first_name: first,
                 last_name: last,
                 password: hash},
@@ -130,25 +131,26 @@ con.put("/v1/account/:id", async (req, res) => {
               where: {
                 username: user,
               },
-            }).then((dbAccc) => {
-              return res.status(200).send(dbAccc);
             });
+             
+              return res.status(200).send("");
+            
           } else {
             return res.status(403).send("Forbidden");
           }
         } else {
           return res.status(401).send("Unauthorized");
         }
-      } else {
+      } 
+      else {
         return res.status(401).send("Unauthorized");
       }
-    })
-    .catch((err) => {
-      if (err) {
+    }
+    catch(err)  {
         console.log(err);
         return res.status(400).send("Bad Request");
       }
     });
-  });
+ 
 
 module.exports = con;
