@@ -2,14 +2,15 @@
 var mysql = require('mysql2');
 const express = require("express");
 const app = express();
-const connection = require("../utils/db");
+const {User} = require("../models");
+ User.sequelize.sync();
 const bcrypt = require("bcryptjs");
 const con = express.Router();
 
 const basicAuth = require("express-basic-auth");
 app.use(basicAuth);
 
-//Basic Auth
+//Basic Auth implementation 
 function Basicauthentication(req, res, next) {
   var authheader = req.headers.authorization || null;
   if (!authheader) {
@@ -26,128 +27,175 @@ con.get("/healthz", (req, res) => {
   res.status(200).send();
 });
 
-// get user
-con.get("/v1/account/:id", (req, res) => {
+
+//get user data with sequalize 
+con.get("/v1/account/:id", async (req, res) => {
   auth = Basicauthentication(req, res);
-  var user = auth[0];
-  var pass = auth[1];
-  connection.query(
-    "SELECT first_name, last_name, password, username, account_created, account_updated FROM users WHERE username= ?",
-    [user],
-    (err, results, fields) => {
-      if (results[0]) {
-        const p = results[0].password || null;
-        const validPass = bcrypt.compareSync(pass, p);
+  var userName = auth[0];
+  var passWord = auth[1];
+  await User.findOne({
+    where: {
+      username: userName,
+    },
+  })
+    .then((dbAcc) => {
+      if (dbAcc) {
+        const validPass = bcrypt.compareSync(passWord, dbAcc.password);
         if (validPass) {
-            connection.query(
-            "SELECT id, first_name, last_name, username, account_created, account_updated FROM users WHERE id= ? and username= ?",
-            [req.params.id, user],
-            (err, results, fields) => {
-              if (results[0]) {
-                res.send(results);
-              } else {
-                res.status(403).send("Forbidden");
-              }
-            }
-          );
+          if (req.params.id === dbAcc.id) {
+            return res.status(200).send(dbAcc);
+          } else {
+            return res.status(403).send("Forbidden");
+          }
         } else {
-          res.status(401).send("Unauthorized");
+          return res.status(401).send("Unauthorized");
         }
       } else {
-        res.status(401).send("Unauthorized");
+        return res.status(401).send("Unauthorized");
       }
-    }
-  );
+    })
+    .catch((err) => {
+      if (err) {
+        console.log(err);
+        return res.status(400).send("Bad Request");
+      }
+    });
 });
 
 
-// add new user with hash+salt
-con.post("/v1/account", async(req, res)=>{
-    let regex = new RegExp("[a-z0-9]+@[a-z]+.[a-z]{2,3}");
-    regex.test(req.body.username);
-    if (!regex.test(req.body.username)) {
-      return res.status(400).send("Username should be in email format");
-    }
-    const data = req.body;
-    const hash = await bcrypt.hash(data.password,10);
-    console.log(hash);
-    connection.query( "SET @id = ?;SET @first_name = ?;SET @last_name = ?;SET @password = ?;SET @username = ?;SET @account_created = ?;SET @account_updated = ?;  INSERT INTO users(id, first_name, last_name, password, username, account_created, account_updated) VALUES (SUBSTR(MD5(RAND()), 1, 8), @first_name, @last_name, @password, @username, now(),now())",
-     [
-        data.id,
-        data.first_name,
-        data.last_name,
-        hash,
-        data.username,
-        data.account_created,
-        data.account_updated,
-      ], (err,result)=>{  
-   if(err)
-   {
-    res.status(400).send("Username already taken");
-   }else
-   {
-   
-    res.send(result);
-   
-   }
-   
+
+   con.post("/v1/account", async (req, res) => {
+    const hash = await bcrypt.hash(req.body.password, 10);
+    await User.create({
+      first_name: req.body.first_name,
+      last_name: req.body.last_name,
+      username: req.body.username,
+      password: hash,
     })
-   });
+      .then((Acco) => {
+        Acco.password = undefined;
+        return res.status(201).send(Acco);
+      })
+      .catch((err) => {
+        if (err) {
+          return res.status(400).send("Bad Request");
+        }
+      });
+  });
+
+
+
+
+// con.put("/v1/account/:id", async (req, res) => {
+//   // Checking payload here 
+//   const bodyfields = req.body;
+//   const hash = await bcrypt.hash(req.body.password, 10);
+//   const updatedhash = hash;
+//   for (let x in bodyfields) {
+//     if (
+//       x != "first_name" &&
+//       x != "last_name" &&
+//       x != "password" &&
+//       x != "username"
+//     ) {
+//       return res.status(400).send("Bad Request");
+//     }
+//   }
+
+//   auth = Basicauthentication(req, res);
+//   var user = auth[0];
+//   var pass = auth[1];
+
+//   await User.findOne({
+//     where: {
+//       username: user,
+//     },
+//   })
+//     .then((dbAcc) => {
+//       if (dbAcc) {
+//         const validPass = bcrypt.compareSync(pass, dbAcc.password);
+//         if (validPass) {
+//           if (req.params.id === dbAcc.id) {
+//             User.update(req.body.password =updatedhash, {
+//               where: {
+//                 username: user,
+//               },
+//             }).then((dbAccc) => {
+//               return res.status(200).send(dbAccc);
+//             });
+//           } else {
+//             return res.status(403).send("Forbidden");
+//           }
+//         } else {
+//           return res.status(401).send("Unauthorized");
+//         }
+//       } else {
+//         return res.status(401).send("Unauthorized");
+//       }
+//     })
+//     .catch((err) => {
+//       if (err) {
+//         console.log(err);
+//         return res.status(400).send("Bad Request");
+//       }
+//     });
+//   });
+
+
+
+
 
 con.put("/v1/account/:id", async (req, res) => {
-    auth = Basicauthentication(req);
-    var user = auth[0];
-    var pass = auth[1];
-    console.log(user);
-    const { username, password } = req.body;
-    const hash = await bcrypt.hash(password, 10);
-//     const sql =
-  
-//   "SET @id = ?;SET @first_name = ?;SET @last_name = ?;SET @password = ?;SET @username = ?; UPDATE apidb.users SET  first_name = @first_name, last_name = @last_name,  password = @password, username = @username,  account_updated = now() WHERE ID = @ID and username=@username COLLATE utf8mb4_unicode_ci;";
+  // Check if input payload contains any other fields than the editable fields
+  const bodyfields = req.body;
+  for (let x in bodyfields) {
+    if (
+      x != "first_name" &&
+      x != "last_name" &&
+      x != "password" &&
+      x != "username"
+    ) {
+      return res.status(400).send("Bad Request");
+    }
+  }
 
+  auth = Basicauthentication(req, res);
+  var user = auth[0];
+  var pass = auth[1];
 
-    //const updatequery =
-    
-    //"SET @id= ?; SET @first_name = ?;SET @last_name = ?;SET @password = ?; SET @username=?; UPDATE apidb.users SET  first_name = @first_name, last_name = @last_name, password = @password , account_updated = now() WHERE id = @id and username=@username COLLATE utf8mb4_unicode_ci"
-   // UPDATE users SET  first_name = @first_name, last_name = @last_name,  password = @password, account_updated = CURRENT_TIMESTAMP WHERE id = @id and username=@username COLLATE utf8mb4_unicode_ci "
-
-   let updateQuery = "UPDATE ?? SET ?? = ?, ?? = ?, ?? = ?, ?? = CURRENT_TIMESTAMP WHERE ?? = ?";
-   let qb = req.body;
-   let query = mysql.format(updateQuery,["users","first_name",qb.first_name,"last_name",qb.last_name,"password",hash,"account_updated","id",req.params.id]);
-    
-    
-   connection.query(
-      "SELECT first_name, last_name, password, username, account_created, account_updated FROM users WHERE id= ? and username= ?",
-      [req.params.id, user],
-      (err, results, fields) => {
-        if (results[0]) {
-          const p = results[0].password || null;
-          const validPass = bcrypt.compareSync(pass, p);
-          console.log(validPass);
-          if (validPass === true) {
-            console.log("inside validpass");
-            connection.query(
-                query,
-                //"SET @id = ?;SET @first_name = ?;SET @last_name = ?;SET @password = ?;SET @username = ?; UPDATE apidb.users SET  first_name = @first_name, last_name = @last_name,  password = @password, username = @username,  account_updated = now() WHERE ID = @ID; SELECT * FROM users WHERE ID = @ID;",
-              //[req.params.id, qb.first_name, qb.last_name,hash,user],
-              (err, results, fields) => {
-                if(err){
-                    console.error(err)
-                    res.status(400).send(err)
-                    return
-                }
-                res.send("User Data Updated!!");
-              }
-            );
+  await User.findOne({
+    where: {
+      username: user,
+    },
+  })
+    .then((dbAcc) => {
+      if (dbAcc) {
+        const validPass = bcrypt.compareSync(pass, dbAcc.password);
+        if (validPass) {
+          if (req.params.id === dbAcc.id) {
+            User.update(req.body, {
+              where: {
+                username: user,
+              },
+            }).then((dbAccc) => {
+              return res.status(200).send(dbAccc);
+            });
           } else {
-            res.status(401).send("Unauthorized");
+            return res.status(403).send("Forbidden");
           }
         } else {
-          console.log(err);
-          res.status(403).send("Forbidden");
+          return res.status(401).send("Unauthorized");
         }
+      } else {
+        return res.status(401).send("Unauthorized");
       }
-    );
+    })
+    .catch((err) => {
+      if (err) {
+        console.log(err);
+        return res.status(400).send("Bad Request");
+      }
+    });
   });
 
 module.exports = con;
