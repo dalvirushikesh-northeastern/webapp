@@ -18,3 +18,4 @@ app.use(apidbRoutes);
         console.log(`Server listening on the port::::::${port}`);
     });
 
+    module.exports = app;
