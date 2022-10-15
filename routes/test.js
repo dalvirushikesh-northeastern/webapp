@@ -42,8 +42,9 @@ con.get("/v1/account/:id", async (req, res) => {
       if (userr) {
         const validPass = bcrypt.compareSync(passWord, userr.password);
         if (validPass) {
-          if (req.params.id === dbAcc.id) {
-            return res.status(200).send(dbAcc);
+          if (req.params.id === userr.id) {
+            userr.password = undefined;
+            return res.status(200).send(userr);
           } else {
             return res.status(403).send("Forbidden");
           }
@@ -63,7 +64,7 @@ con.get("/v1/account/:id", async (req, res) => {
 
 
 
-
+// create new user end point with sequelize 
    con.post("/v1/account", async (req, res) => {
     try{
     const hash = await bcrypt.hash(req.body.password, 10);
