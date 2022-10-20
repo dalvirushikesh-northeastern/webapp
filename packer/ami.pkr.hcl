@@ -21,7 +21,7 @@ variable "subnet_id" {
 # https://www.packer.io/plugins/builders/amazon/ebs
 source "amazon-ebs" "my-ami" {
   region          = "${var.aws_region}"
-  ami_name        = "Webapp AMI"
+  ami_name        = "csye6225_${formatdate("YYYY_MM_DD_hh_mm_ss", timestamp())}"
   ami_description = "AMI for CSYE 6225 Webapp"
   ami_regions = [
     "us-east-1",
