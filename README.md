@@ -26,6 +26,7 @@ test-body
  }
 
 
+
  # get api 
  http://localhost:3000/v1/account/:id 
 - use basic auth and drop credentials 
@@ -43,3 +44,15 @@ http://localhost:3000/v1/account/:id
         "password": ""
         
 }
+# Assignment 4 commands
+
+cd packer 
+export AWS_ACCESS_KEY_ID=<"">
+
+export AWS_SECRET_ACCESS_KEY=<"">
+
+packer init .
+
+packer build ami.pkr.hcl    
+
+....testing again
