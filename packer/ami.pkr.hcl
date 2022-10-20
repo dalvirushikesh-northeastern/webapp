@@ -26,6 +26,9 @@ source "amazon-ebs" "my-ami" {
   ami_regions = [
     "us-east-1",
   ]
+  ami_users =[
+    "006102759325",
+  ]
   aws_polling {
     delay_seconds = 120
     max_attempts  = 50
