@@ -34,7 +34,6 @@ source "amazon-ebs" "my-ami" {
   instance_type = "t2.micro"
   source_ami    = "${var.source_ami}"
   ssh_username  = "${var.ssh_username}"
-
   launch_block_device_mappings {
     delete_on_termination = true
     device_name           = "/dev/sda1"
@@ -45,6 +44,16 @@ source "amazon-ebs" "my-ami" {
 
 build {
   sources = ["source.amazon-ebs.my-ami"]
+  provisioner "file" {
+    source      = "./webapp.zip"
+    destination = "/home/ubuntu/webapp.zip"
+
+  }
+  
+
+  provisioner "shell" {
+    script = "./provisioners.sh"
+  }
 
 }
 
