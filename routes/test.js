@@ -1,11 +1,40 @@
 //Package Imports
 var mysql = require('mysql2');
+require("dotenv").config()
 const express = require("express");
 const app = express();
 const {User} = require("../models");
  User.sequelize.sync();
 const bcrypt = require("bcryptjs");
 const con = express.Router();
+const aws = require('aws-sdk')
+const multer = require('multer')
+const multerS3 = require('multer-s3');
+
+//connecting to s3 bucket and uploading the file 
+aws.config.update({
+    secretAccessKey: process.env.ACCESS_SECRET,
+    accessKeyId: process.env.ACCESS_KEY,
+    region: process.env.REGION,
+
+});
+const BUCKET = process.env.BUCKET
+const s3 = new aws.S3();
+
+const upload = multer({
+    storage: multerS3({
+        s3: s3,
+        acl: "public-read",
+        bucket: BUCKET,
+        key: function (req, file, cb) {
+            console.log(file);
+            cb(null, file.originalname)
+        }
+    })
+})
+
+
+
 
 const basicAuth = require("express-basic-auth");
 app.use(basicAuth);
@@ -85,10 +114,6 @@ con.get("/v1/account/:id", async (req, res) => {
   });
 
 
-
-
-
-
 con.put("/v1/account/:id", async (req, res) => {
   // Checking  any other fields than the editable fields
   try{
@@ -152,5 +177,13 @@ con.put("/v1/account/:id", async (req, res) => {
       }
     });
  
+
+
+// Starting of document endpoints
+con.post('/v1/documents', upload.single('file'), async (req, res)=> {
+
+  res.send('Successfully connected!')
+
+})
 
 module.exports = con;
