@@ -1,7 +1,7 @@
 module.exports = (sequelize , DataTypes) =>{
     const Document = sequelize.define("Document",{
     //attributes for the project
-     doc_id : {
+     doc_id: {
         type : DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         readOnly: true,
@@ -16,15 +16,16 @@ module.exports = (sequelize , DataTypes) =>{
         allowNull: false,
         readOnly: true,
     },
-    s3_bucket_path : {
+    s3_bucket_path: {
         type : DataTypes.STRING,
         allowNull: false,
         readOnly:true
     },
     },
     {
-    createdAt: 'date_created'
+    createdAt:'date_created',
+    updatedAt: false,
+   
     });
-    
     return Document;
     };

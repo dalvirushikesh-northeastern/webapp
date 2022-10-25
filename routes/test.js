@@ -3,8 +3,9 @@ var mysql = require('mysql2');
 require("dotenv").config()
 const express = require("express");
 const app = express();
-const {User} = require("../models");
+const {User ,Document} = require("../models");
  User.sequelize.sync();
+ Document.sequelize.sync();
 const bcrypt = require("bcryptjs");
 const con = express.Router();
 const aws = require('aws-sdk')
@@ -21,7 +22,8 @@ aws.config.update({
 const BUCKET = process.env.BUCKET
 const s3 = new aws.S3();
 
-const upload = multer({
+
+  const upload = multer({
     storage: multerS3({
         s3: s3,
         acl: "public-read",
@@ -32,7 +34,6 @@ const upload = multer({
         }
     })
 })
-
 
 
 
@@ -67,6 +68,7 @@ con.get("/v1/account/:id", async (req, res) => {
     where: {
       username: userName,
     },
+    
   });
       if (userr) {
         const validPass = bcrypt.compareSync(passWord, userr.password);
@@ -179,11 +181,214 @@ con.put("/v1/account/:id", async (req, res) => {
  
 
 
-// Starting of document endpoints
-con.post('/v1/documents', upload.single('file'), async (req, res)=> {
+// Starting of document endpoints/////////////////////////////////////////////////////////////
 
-  res.send('Successfully connected!')
+// endpoint to upload the document 
+const Ufile  = upload.single("file");
+con.post("/v1/documents", async (req, res) => {
+  try{
+  auth = Basicauthentication(req, res);
+  var userName = auth[0];
+  var passWord = auth[1];
+   const userr = await User.findOne({
+    where: {
+      username: userName,
+    },
+  });
+      if (userr) {
+        const CorrectPass = bcrypt.compareSync(passWord, userr.password);
+        if (CorrectPass) {     
+          Ufile(req, res, async (err) => {
+            if (err) {
+              res.status(400).send("Bad Request");
+            }
+            const docx = await Document.create({
+              user_id: userr.id,
+               name: req.file.key,
+               s3_bucket_path: req.file.location
+            });
+            
+            res.status(201).send(docx);
+  
+          });
+         } else {
+          return res.status(401).send("Unauthorized");
+        }
+      } else {
+        return res.status(401).send("Unauthorized");
+      }
+    }
+    catch(err) {
+      
+        console.log(err);
+        return res.status(400).send("Bad Request");
+    }
+    });
 
-})
+
+
+
+
+// get list of all documents uploaded 
+con.get("/v1/documents", async (req, res) => {
+  try{
+  auth = Basicauthentication(req, res);
+  var userName = auth[0];
+  var passWord = auth[1];
+   const userr = await User.findOne({
+    where: {
+      username: userName,
+    },
+  });
+      if (userr) {
+        const CorrectPass = bcrypt.compareSync(passWord, userr.password);
+        if (CorrectPass) {     
+          
+            const docx = await Document.findAll({
+              where: {
+                user_id: userr.id
+              },
+            });
+            
+            if(docx){
+            res.status(200).send(docx);
+            }
+            else{
+              return res.status(403).send("forbidden");
+            }
+        
+         } else {
+          return res.status(401).send("Unauthorized");
+        }
+      } else {
+        return res.status(401).send("Unauthorized");
+      }
+    }
+    catch(err) {
+      
+        console.log(err);
+        return res.status(400).send("Bad Request");
+    }
+    });
+
+
+
+
+// get details of document with id 
+con.get("/v1/documents/:doc_id", async (req, res) => {
+  try{
+  auth = Basicauthentication(req, res);
+  var userName = auth[0];
+  var passWord = auth[1];
+   const userr = await User.findOne({
+    where: {
+      username: userName,
+    },
+  });
+      if (userr) {
+        const CorrectPass = bcrypt.compareSync(passWord, userr.password);
+        if (CorrectPass) {    
+          const document_id = req.params.doc_id; 
+            const docx = await Document.findOne({
+              where: {
+                user_id: userr.id,
+                doc_id:document_id,
+              },
+            });
+            if(docx){
+              res.status(200).send(docx);
+            }
+            else{
+              return res.status(403).send("Forbidden");
+            }
+            
+         } else {
+          return res.status(401).send("Unauthorized");
+        }
+      } else {
+        return res.status(401).send("Unauthorized");
+      }
+    }
+    catch(err) {
+      
+        console.log(err);
+        return res.status(400).send("Bad Request");
+    }
+    });
+
+
+
+// delete document with basic auth
+con.delete("/v1/documents/:doc_id", async (req, res) => {
+      try{
+      auth = Basicauthentication(req, res);
+      var userName = auth[0];
+      var passWord = auth[1];
+       const userr = await User.findOne({
+        where: {
+          username: userName,
+        },
+      });
+          if (userr) {
+            const CorrectPass = bcrypt.compareSync(passWord, userr.password);
+            if (CorrectPass) {    
+              const document_id = req.params.doc_id; 
+                const docx = await Document.findOne({
+                  where: {
+                    user_id: userr.id,
+                    doc_id:document_id,
+                  },
+                });
+                if (docx) {
+                  await s3.deleteObject({Bucket:BUCKET,Key: docx.name}).promise();
+                  const del = await Document.destroy({
+                    where: {
+                      user_id: userr.id,
+                      doc_id:document_id,
+                    },
+
+                  });
+                   res.sendStatus(204);
+                  
+                }
+                else{
+
+                  return res.status(404).send("Not Found");
+                }
+             } else {
+              return res.status(401).send("Unauthorized");
+            }
+          } else {
+            return res.status(401).send("Unauthorized");
+          }
+        }
+        catch(err) {
+          
+            console.log(err);
+            return res.status(400).send("Bad Request");
+        }
+        });
+
+
+// // endpoint to get the document 
+// con.delete('/v1/documents/:filename', async (req, res)=> {
+//   const filename = req.params.filename
+//   await s3.deleteObject({ Bucket:BUCKET,Key:filename}).promise();
+//   res.send("file deleted Successfully");
+
+
+
+
+      // });
+  
+  
+
+
+
+
+
+
+
+
 
 module.exports = con;
