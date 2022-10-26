@@ -51,7 +51,7 @@ build {
     source      = "./webapp.zip"
     destination = "/home/ubuntu/webapp.zip"
 
-  }
+  
   
 
   provisioner "shell" {
