@@ -75,13 +75,7 @@ jobs:
 
         uses: hashicorp-contrib/setup-packer@v1.0.0
 
-      - name: Zipping webapp files
-
-        run: |
-
-          zip -r webapp.zip ./
-
-          pwd ./webapp
+     
           
       - name: Run packer commands
 
