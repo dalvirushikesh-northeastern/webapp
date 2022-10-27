@@ -1,9 +1,9 @@
 {
   "development": {
-    "username": "admin",
-    "password" : "password",
-    "database" : "my_db",
-    "host"     : "database-1.cevcwlftg41m.us-east-1.rds.amazonaws.com",
+    "username": "newuser",
+    "password" : "newpassword",
+    "database" : "nodemysql",
+    "host"     : "localhost",
     "port":"3000",
     "dialect": "mysql",
     "timezone": "+08:00"
