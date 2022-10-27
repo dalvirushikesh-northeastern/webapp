@@ -1,8 +1,8 @@
 {
   "development": {
-    "username": "newuser",
-    "password" : "newpassword",
-    "database" : "nodemysql",
+    "username": "root",
+    "password" : "California@12",
+    "database" : "api_db",
     "host"     : "localhost",
     "port":"3000",
     "dialect": "mysql",

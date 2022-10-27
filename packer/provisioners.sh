@@ -5,10 +5,11 @@ sleep 30
 sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get install nginx -y
-sudo curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
+sudo curl -sL https://deb.nodesource.com/setup_18.x -o nodesource_setup.sh
 sudo bash nodesource_setup.sh
 sudo apt-get install nodejs -y
 sudo apt-get install npm -y
+sudo mv /tmp/webapp.zip /home/ubuntu/webapp.zip
 sudo apt install unzip
 cd ~/ && unzip webapp.zip
 cd ~/webapp && npm i --only=prod
@@ -31,7 +32,6 @@ EOF
 
 echo "Starting mysql server"
 
-
 sudo service mysql start
 
 sudo npm i pm2
@@ -43,3 +43,4 @@ sudo pm2 start server.js
 sudo pm2 startup systemd
 
 sudo apt-get clean
+
