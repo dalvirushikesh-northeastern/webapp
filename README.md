@@ -55,4 +55,4 @@ packer init .
 
 packer build ami.pkr.hcl    
 
-....testing again2
+....testing again3
