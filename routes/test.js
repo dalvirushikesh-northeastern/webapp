@@ -226,9 +226,6 @@ con.post("/v1/documents", async (req, res) => {
     });
 
 
-
-
-
 // get list of all documents uploaded 
 con.get("/v1/documents", async (req, res) => {
   try{
