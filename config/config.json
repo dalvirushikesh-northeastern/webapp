@@ -1,12 +1,11 @@
 {
   "development": {
     "username": "root",
-    "password" : "California@12",
-    "database" : "api_db",
-    "host"     : "localhost",
-    "port":"3000",
+    "password": "California@12",
+    "database":"apidb",
+    "host": "localhost",
     "dialect": "mysql",
-    "timezone": "+08:00"
+    "timezone":"-04:00"
   },
   "test": {
     "username": "root",
