@@ -55,4 +55,4 @@ packer init .
 
 packer build ami.pkr.hcl    
 
-....testing with s3
+removed zip
