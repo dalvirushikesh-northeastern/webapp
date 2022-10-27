@@ -81,7 +81,7 @@ jobs:
 
           zip -r webapp.zip ./
 
-          pwd ./webapp 
+          pwd ./webapp
 
 
       - name: Run packer commands

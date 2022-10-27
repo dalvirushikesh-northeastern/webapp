@@ -9,7 +9,7 @@ sudo curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
 sudo bash nodesource_setup.sh
 sudo apt-get install nodejs -y
 sudo apt-get install npm -y
-sudo mv /tmp/webapp.zip /home/ubuntu/webapp.zip
+//sudo mv /tmp/webapp.zip /home/ubuntu/webapp.zip
 sudo apt install unzip
 cd ~/ && unzip webapp.zip
 cd ~/webapp && npm i --only=prod
