@@ -1,10 +1,11 @@
 {
   "development": {
-    "username": "root",
-    "password": "California@12",
-    "database":"apidb",
-    "host": "localhost",
+    "username": "csye6225",
+    "password": "root",
+    "database":"csye6225",
+    "host": "csye6225.cevcwlftg41m.us-east-1.rds.amazonaws.com",
     "dialect": "mysql",
+    
     "timezone":"-04:00"
   },
   "test": {
