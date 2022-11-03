@@ -59,4 +59,4 @@ removed zip
 
 assignment 5 demo 
 
-assigment 6 testing
+assigment 6 testing dns
