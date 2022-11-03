@@ -58,3 +58,5 @@ packer build ami.pkr.hcl
 removed zip
 
 assignment 5 demo 
+
+assigment 6 testing
