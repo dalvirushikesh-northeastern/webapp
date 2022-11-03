@@ -32,8 +32,8 @@ sudo apt-get install mysql-server -y
 
 sudo npm i pm2
 sudo npm i -g pm2
-sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8000
 sudo pm2 start server.js
+sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8000
 sudo pm2 startup systemd
 
 sudo apt-get clean
