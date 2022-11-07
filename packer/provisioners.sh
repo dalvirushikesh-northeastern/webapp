@@ -29,11 +29,13 @@ sudo apt-get install mysql-server -y
 # EOF
 # echo "Starting mysql server"
 # sudo service mysql start
+wget https://s3.amazonaws.com/amazoncloudwatch-agent/debian/amd64/latest/amazon-cloudwatch-agent.deb
+sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
 sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-    -a fetch-config \
-    -m ec2 \
-    -c file:/opt/cloudwatch-config.json \
-    -s
+-a fetch-config \
+-m ec2 \
+-c file:/home/ubuntu/webapp/statsd/config.json \
+-s
 
 sudo npm i pm2
 sudo npm i -g pm2
