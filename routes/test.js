@@ -11,6 +11,7 @@ const con = express.Router();
 const aws = require('aws-sdk')
 const multer = require('multer')
 const multerS3 = require('multer-s3');
+const logger = require("../config/logger");
 
 //connecting to s3 bucket and uploading the file 
 aws.config.update({
@@ -54,6 +55,7 @@ function Basicauthentication(req, res, next) {
 
 //Health check point 
 con.get("/healthz", (req, res) => {
+  logger.info("/health running fine");
   res.status(200).send();
 });
 
