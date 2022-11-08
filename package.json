@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "app-root-path": "^3.1.0",
     "aws-sdk": "^2.1238.0",
     "bcrypt": "^5.0.1",
     "bcryptjs": "^2.4.3",
@@ -32,6 +33,7 @@
     "rootpath": "^0.1.2",
     "sequelize": "^6.25.1",
     "sequelize-cli": "^6.5.1",
+    "statsd-client": "^0.4.7",
     "swagger-jsdoc": "^4.3.2",
     "swagger-ui-express": "^4.5.0",
     "winston": "^3.8.2"

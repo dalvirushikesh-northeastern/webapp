@@ -12,7 +12,11 @@ const aws = require('aws-sdk')
 const multer = require('multer')
 const multerS3 = require('multer-s3');
 const logger = require("../config/logger");
+const SDC = require('statsd-client');
+const dbConfig = require("../config/config.js");
 
+const sdc = new SDC({host: dbConfig.host,port: 8000});
+var start = new Date();
 //connecting to s3 bucket and uploading the file 
 aws.config.update({
     //secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -55,7 +59,10 @@ function Basicauthentication(req, res, next) {
 
 //Health check point 
 con.get("/healthz", (req, res) => {
-  logger.info("/health running fine");
+  console.log("Is it hitting?")
+    sdc.timing('health.timeout', start);
+    logger.info("/health running fine");
+    sdc.increment('endpoint.health');
   res.status(200).send();
 });
 
