@@ -17,6 +17,8 @@ const dbConfig = require("../config/config.js");
 
 const sdc = new SDC({host: dbConfig.host,port: 8000});
 var start = new Date();
+const StatsD = require('node-statsd'),
+      client = new StatsD();
 //connecting to s3 bucket and uploading the file 
 aws.config.update({
     //secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -63,6 +65,8 @@ con.get("/healthz", (req, res) => {
     sdc.timing('health.timeout', start);
     logger.info("/health running fine");
     sdc.increment('endpoint.health');
+    client.gauge('my_gauge', 123.45);
+    client.increment('my_counter');
   res.status(200).send();
 });
 
