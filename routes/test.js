@@ -87,7 +87,7 @@ con.get("/v1/account/:id", async (req, res) => {
             logger.info("User data fetched successfully");
             return res.status(200).send(userr);
           } else {
-            logger.info("/Unauthorized user trying to access");
+            logger.info("/Forbidden 403 user trying to access");
             return res.status(403).send("Forbidden");
           }
         } else {
@@ -102,7 +102,7 @@ con.get("/v1/account/:id", async (req, res) => {
     catch(err) {
       
         console.log(err);
-        logger.info("/create user 400");
+        logger.info("/get user 400 bad request");
         return res.status(400).send("Bad Request");
     }
     });
@@ -121,10 +121,11 @@ con.get("/v1/account/:id", async (req, res) => {
     });
       
     newuser.password = undefined;
+    logger.info("/create user success");
         return res.status(201).send(newuser);
       }
       catch(err) {
-      
+        logger.info("/get user 400 bad request");
           return res.status(400).send(err);
         }
   });
@@ -141,6 +142,7 @@ con.put("/v1/account/:id", async (req, res) => {
       x != "password" &&
       x != "username"
     ) {
+      logger.info("/get user 400 bad request");
       return res.status(400).send("Bad Request");
     }
   }
@@ -173,22 +175,26 @@ con.put("/v1/account/:id", async (req, res) => {
                 username: user,
               },
             });
-             
+            logger.info("update user successfully");
               return res.status(200).send("");
             
           } else {
+            logger.info("/update user 403 Forbidden");
             return res.status(403).send("Forbidden");
           }
         } else {
+          logger.info("/update user 401 unauthorized");
           return res.status(401).send("Unauthorized");
         }
       } 
       else {
+        logger.info("/update user 401 unauthorized");
         return res.status(401).send("Unauthorized");
       }
     }
     catch(err)  {
         console.log(err);
+        logger.info("/get user 400 bad request");
         return res.status(400).send("Bad Request");
       }
     });
@@ -214,6 +220,7 @@ con.post("/v1/documents", async (req, res) => {
         if (CorrectPass) {     
           Ufile(req, res, async (err) => {
             if (err) {
+              logger.info("/doc create  400 bad request");
               res.status(400).send("Bad Request");
             }
             const docx = await Document.create({
@@ -221,20 +228,23 @@ con.post("/v1/documents", async (req, res) => {
                name: req.file.key,
                s3_bucket_path: req.file.location
             });
-            
+            logger.info("/doc created successfully");
             res.status(201).send(docx);
   
           });
          } else {
+          logger.info("/doc create 401 unauthorized");
           return res.status(401).send("Unauthorized");
         }
       } else {
+        logger.info("/doc create 401 unauthorized");
         return res.status(401).send("Unauthorized");
       }
     }
     catch(err) {
       
         console.log(err);
+        logger.info("/doc create 400 bad request");
         return res.status(400).send("Bad Request");
     }
     });
@@ -262,22 +272,27 @@ con.get("/v1/documents", async (req, res) => {
             });
             
             if(docx){
+              logger.info("/doc list fetched successfully");
             res.status(200).send(docx);
             }
             else{
+              logger.info("/doc 403 Forbidden");
               return res.status(403).send("forbidden");
             }
         
          } else {
+          logger.info("/doc list 401 unauthorized");
           return res.status(401).send("Unauthorized");
         }
       } else {
+        logger.info("/doc list 401 unauthorized");
         return res.status(401).send("Unauthorized");
       }
     }
     catch(err) {
       
         console.log(err);
+        logger.info("/doc list 400 bad request");
         return res.status(400).send("Bad Request");
     }
     });
@@ -307,22 +322,28 @@ con.get("/v1/documents/:doc_id", async (req, res) => {
               },
             });
             if(docx){
+              logger.info("/doc fetched successfully");
               res.status(200).send(docx);
             }
             else{
+              logger.info("/doc 403 Forbidden");
               return res.status(403).send("Forbidden");
             }
             
          } else {
+          logger.info("/doc 401 unauthorized");
           return res.status(401).send("Unauthorized");
         }
       } else {
+        logger.info("/doc 401 unauthorized");
         return res.status(401).send("Unauthorized");
       }
     }
     catch(err) {
+
       
         console.log(err);
+        logger.info("/doc 400 bad request");
         return res.status(400).send("Bad Request");
     }
     });
@@ -359,46 +380,30 @@ con.delete("/v1/documents/:doc_id", async (req, res) => {
                     },
 
                   });
+            
                    res.sendStatus(204);
                   
                 }
                 else{
-
+                  logger.info("/doc delete 403 Forbidden");
                   return res.status(404).send("Not Found");
                 }
              } else {
+              logger.info("/doc delete 401 unauthorized");
               return res.status(401).send("Unauthorized");
             }
           } else {
+            logger.info("/doc delete 401 unauthorized");
             return res.status(401).send("Unauthorized");
           }
         }
         catch(err) {
           
             console.log(err);
+            logger.info("/doc delete 400 bad request");
             return res.status(400).send("Bad Request");
         }
         });
-
-
-// // endpoint to get the document 
-// con.delete('/v1/documents/:filename', async (req, res)=> {
-//   const filename = req.params.filename
-//   await s3.deleteObject({ Bucket:BUCKET,Key:filename}).promise();
-//   res.send("file deleted Successfully");
-
-
-
-
-      // });
-  
-  
-
-
-
-
-
-
 
 
 
