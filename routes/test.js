@@ -84,20 +84,25 @@ con.get("/v1/account/:id", async (req, res) => {
         if (validPass) {
           if (req.params.id === userr.id) {
             userr.password = undefined;
+            logger.info("User data fetched successfully");
             return res.status(200).send(userr);
           } else {
+            logger.info("/Unauthorized user trying to access");
             return res.status(403).send("Forbidden");
           }
         } else {
+          logger.info("/Unauthorized user trying to access");
           return res.status(401).send("Unauthorized");
         }
       } else {
+        logger.info("/Unauthorized user trying to access");
         return res.status(401).send("Unauthorized");
       }
     }
     catch(err) {
       
         console.log(err);
+        logger.info("/create user 400");
         return res.status(400).send("Bad Request");
     }
     });
