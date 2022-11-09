@@ -6,7 +6,7 @@ sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get install nginx -y
 sudo mkdir webapp
-sudo mv routes config README.md models package-lock.json server.js packer test.js package.json ~/webapp/
+sudo mv routes statsd config README.md models package-lock.json server.js packer test.js package.json ~/webapp/
 # sudo cp -r routes config README.md models package-lock.json server.js packer test.js package.json ~/webapp/
 # cd webapp && sudo curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
 cd webapp
@@ -29,6 +29,13 @@ sudo apt-get install mysql-server -y
 # EOF
 # echo "Starting mysql server"
 # sudo service mysql start
+sudo curl -o /root/amazon-cloudwatch-agent.deb https://s3.amazonaws.com/amazoncloudwatch-agent/debian/amd64/latest/amazon-cloudwatch-agent.deb
+sudo dpkg -i -E /root/amazon-cloudwatch-agent.deb
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+-a fetch-config \
+-m ec2 \
+-c file:/home/ubuntu/webapp/statsd/config.json \
+-s
 
 sudo npm i pm2
 sudo npm i -g pm2

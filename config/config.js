@@ -11,5 +11,6 @@ require("dotenv").config();
       min: 0,
       idle:1000,
     },
-  
+    METRICS_HOSTNAME: "localhost",
+    METRICS_PORT: 8125
   };
