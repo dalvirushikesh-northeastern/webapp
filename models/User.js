@@ -29,8 +29,8 @@ module.exports = (sequelize , DataTypes) =>{
     }
     },
     {
-    createdAt: 'account_created',
-    updatedAt: 'account_updated'
+    createdAt: false,
+    updatedAt: false
     
     });
     

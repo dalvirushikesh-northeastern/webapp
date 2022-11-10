@@ -87,6 +87,7 @@ con.get("/v1/account/:id", async (req, res) => {
           if (req.params.id === userr.id) {
             userr.password = undefined;
             logger.info("User data fetched successfully");
+            sdc.increment('endpoint.getUser');
             return res.status(200).send(userr);
           } else {
             logger.info("/Forbidden 403 user trying to access");
@@ -124,6 +125,7 @@ con.get("/v1/account/:id", async (req, res) => {
       
     newuser.password = undefined;
     logger.info("/create user success");
+    sdc.increment('endpoint.CreateUser');
         return res.status(201).send(newuser);
       }
       catch(err) {
@@ -177,7 +179,8 @@ con.put("/v1/account/:id", async (req, res) => {
                 username: user,
               },
             });
-            logger.info("update user successfully");
+            logger.info("update user 204");
+            sdc.increment('endpoint.userUpdate');
               return res.status(200).send("");
             
           } else {
@@ -231,6 +234,7 @@ con.post("/v1/documents", async (req, res) => {
                s3_bucket_path: req.file.location
             });
             logger.info("/doc created successfully");
+            sdc.increment('endpoint.DocCreate');
             res.status(201).send(docx);
   
           });
@@ -275,6 +279,7 @@ con.get("/v1/documents", async (req, res) => {
             
             if(docx){
               logger.info("/doc list fetched successfully");
+              sdc.increment('endpoint.DocGet');
             res.status(200).send(docx);
             }
             else{
@@ -325,6 +330,7 @@ con.get("/v1/documents/:doc_id", async (req, res) => {
             });
             if(docx){
               logger.info("/doc fetched successfully");
+              sdc.increment('endpoint.GetDocID');
               res.status(200).send(docx);
             }
             else{
@@ -382,7 +388,8 @@ con.delete("/v1/documents/:doc_id", async (req, res) => {
                     },
 
                   });
-            
+                  logger.info("delete user 204");
+                  sdc.increment('endpoint.userDelete');
                    res.sendStatus(204);
                   
                 }
