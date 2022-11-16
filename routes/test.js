@@ -1,5 +1,8 @@
 //Package Imports
 var mysql = require('mysql2');
+const {
+  v4: uuidv4
+} = require('uuid');
 require("dotenv").config()
 const express = require("express");
 const app = express();
@@ -29,6 +32,12 @@ aws.config.update({
 const BUCKET = process.env.BUCKET
 const s3 = new aws.S3();
 
+var sns = new aws.SNS({});
+var dynamoDatabase = new aws.DynamoDB({
+    apiVersion: '2012-08-10',
+    region: process.env.AWS_REGION || 'us-east-1'
+});
+
 
   const upload = multer({
     storage: multerS3({
@@ -43,8 +52,8 @@ const s3 = new aws.S3();
 })
 
 
-
 const basicAuth = require("express-basic-auth");
+const { username } = require('../config/config.js');
 app.use(basicAuth);
 
 //Basic Auth implementation 
@@ -126,13 +135,70 @@ con.get("/v1/account/:id", async (req, res) => {
     newuser.password = undefined;
     logger.info("/create user success");
     sdc.increment('endpoint.CreateUser');
+    dynamoDB(req.body.username);
         return res.status(201).send(newuser);
       }
       catch(err) {
         logger.info("/get user 400 bad request");
+        
           return res.status(400).send(err);
         }
   });
+
+
+//con.post("/v1/account", createUser);
+
+// Create a User
+async function dynamoDB(username) {
+
+                const randomnanoID = uuidv4();
+
+                const expiryTime = new Date().getTime();
+
+                // Create the Service interface for dynamoDB
+                var parameter = {
+                    TableName: 'csye-6225',
+                    Item: {
+                        'Email': {
+                            S: username
+                        },
+                        'TokenName': {
+                            S: randomnanoID
+                        },
+                        'TimeToLive': {
+                            N: expiryTime.toString()
+                        }
+                    }
+                };
+                console.log('after user');
+                //saving the token onto the dynamo DB
+                try {
+                    var dydb = await dynamoDatabase.putItem(parameter).promise();
+                    console.log('try dynamoDatabase', dydb);
+                } catch (err) {
+                    console.log('err dynamoDatabase', err);
+                }
+
+                console.log('dynamoDatabase', dydb);
+                var msg = {
+                    'username': username,
+                    'token': randomnanoID
+                };
+                console.log(JSON.stringify(msg));
+
+                const params = {
+
+                    Message: JSON.stringify(msg),
+                    Subject: randomnanoID,
+                    TopicArn: 'arn:aws:sns:us-east-1:335742875091:verify_email'
+
+                }
+                var publishTextPromise = await sns.publish(params).promise();
+
+                console.log('publishTextPromise', publishTextPromise);
+                
+
+            }
 
 
 con.put("/v1/account/:id", async (req, res) => {
