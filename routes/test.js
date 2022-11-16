@@ -54,6 +54,7 @@ var dynamoDatabase = new aws.DynamoDB({
 
 
 const basicAuth = require("express-basic-auth");
+const { username } = require('../config/config.js');
 app.use(basicAuth);
 
 //Basic Auth implementation 
@@ -160,7 +161,7 @@ async function dynamoDB(username) {
                     TableName: 'csye-6225',
                     Item: {
                         'Email': {
-                            S: udata.username
+                            S: username
                         },
                         'TokenName': {
                             S: randomnanoID
@@ -181,7 +182,7 @@ async function dynamoDB(username) {
 
                 console.log('dynamoDatabase', dydb);
                 var msg = {
-                    'username': udata.username,
+                    'username': username,
                     'token': randomnanoID
                 };
                 console.log(JSON.stringify(msg));
@@ -196,15 +197,7 @@ async function dynamoDB(username) {
                 var publishTextPromise = await sns.publish(params).promise();
 
                 console.log('publishTextPromise', publishTextPromise);
-                res.status(201).send({
-                    id: udata.id,
-                    first_name: udata.first_name,
-                    last_name: udata.last_name,
-                    username: udata.username,
-                    account_created: udata.createdAt,
-                    account_updated: udata.updatedAt,
-                    isVerified: udata.isVerified
-                });
+                
 
             }
 
