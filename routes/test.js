@@ -200,6 +200,110 @@ async function dynamoDB(username) {
 
             }
 
+con.get("/v1/account/verifyUserEmail", verifyUser);
+// Verify user
+async function verifyUser(req, res, next) {
+  console.log('verifyUser :');
+  console.log('verifyUser :', req.query.email);
+  const user = await getUserByUsername(req.query.email);
+  if (user) {
+      console.log('got user  :');
+      if (user.dataValues.isVerified) {
+          res.status(202).send({
+              message: 'Already Successfully Verified!'
+          });
+      } else {
+
+          var params = {
+              TableName: 'csye-6225',
+              Key: {
+                  'Email': {
+                      S: req.query.email
+                  },
+                  'TokenName': {
+                      S: req.query.token
+                  }
+              }
+          };
+          console.log('got user  param:');
+          // Call DynamoDB to read the item from the table
+
+          dynamoDatabase.getItem(params, function (err, data) {
+              if (err) {
+                  console.log("Error", err);
+                  res.status(400).send({
+                      message: 'unable to verify'
+                  });
+              } else {
+                  console.log("Success dynamoDatabase getItem", data.Item);
+                  try {
+                      var ttl = data.Item.TimeToLive.N;
+                      var curr = new Date().getTime();
+                      console.log(ttl);
+                      console.log('time diffrence', curr - ttl);
+                      var time = (curr - ttl) / 60000;
+                      console.log('time diffrence ', time);
+                      if (time < 5) {
+                          if (data.Item.Email.S == user.dataValues.username) {
+                              User.update({
+                                  isVerified: true,
+                              }, {
+                                  where: {
+                                      username: req.query.email
+                                  }
+                              }).then((result) => {
+                                  if (result == 1) {
+                                      logger.info("update user 204");
+                                      sdc.increment('endpoint.userUpdate');
+                                      res.status(200).send({
+                                          message: 'Successfully Verified!'
+                                      });
+                                  } else {
+                                      res.status(400).send({
+                                          message: 'unable to verify'
+                                      });
+                                  }
+                              }).catch(err => {
+                                  res.status(500).send({
+                                      message: 'Error Updating the user'
+                                  });
+                              });
+                          } else {
+                              res.status(400).send({
+                                  message: 'Token and email did not matched'
+                              });
+                          }
+                      } else {
+                          res.status(400).send({
+                              message: 'token Expired! Cannot verify Email'
+                          });
+                      }
+                  } catch (err) {
+                      console.log("Error", err);
+                      res.status(400).send({
+                          message: 'unable to verify'
+                      });
+                  }
+              }
+          });
+
+      }
+  } else {
+      res.status(400).send({
+          message: 'User not found!'
+      });
+  }
+}  
+
+async function getUserByUsername(username) {
+
+  return User.findOne({
+      where: {
+          username: username
+      }
+  });
+}
+
 
 con.put("/v1/account/:id", async (req, res) => {
   // Checking  any other fields than the editable fields
