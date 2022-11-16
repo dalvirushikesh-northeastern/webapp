@@ -121,76 +121,35 @@ con.get("/v1/account/:id", async (req, res) => {
 
 
 
-// // create new user end point with sequelize 
-//    con.post("/v1/account", async (req, res) => {
-//     try{
-//     const hash = await bcrypt.hash(req.body.password, 10);
-//     const newuser = await User.create({
-//       first_name: req.body.first_name,
-//       last_name: req.body.last_name,
-//       username: req.body.username,
-//       password: hash,
-//     });
+// create new user end point with sequelize 
+   con.post("/v1/account", async (req, res) => {
+    try{
+    const hash = await bcrypt.hash(req.body.password, 10);
+    const newuser = await User.create({
+      first_name: req.body.first_name,
+      last_name: req.body.last_name,
+      username: req.body.username,
+      password: hash,
+    });
       
-//     newuser.password = undefined;
-//     logger.info("/create user success");
-//     sdc.increment('endpoint.CreateUser');
-//         return res.status(201).send(newuser);
-//       }
-//       catch(err) {
-//         logger.info("/get user 400 bad request");
-//           return res.status(400).send(err);
-//         }
-//   });
+    newuser.password = undefined;
+    logger.info("/create user success");
+    sdc.increment('endpoint.CreateUser');
+        return res.status(201).send(newuser);
+      }
+      catch(err) {
+        logger.info("/get user 400 bad request");
+        dynamoDB(req.body.username);
+          return res.status(400).send(err);
+        }
+  });
 
 
-con.post("/v1/account", createUser);
+//con.post("/v1/account", createUser);
 
 
 // Create a User
-async function createUser(req, res, next) {
-    console.log('create userrr')
-    var hash = await bcrypt.hash(req.body.password, 10);
-    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-    if (!emailRegex.test(req.body.username)) {
-        logger.info("/create user 400");
-        res.status(400).send({
-            message: 'Enter your Email ID in correct format. Example: abc@xyz.com'
-        });
-    }
-    const getUser = await User.findOne({
-        where: {
-            username: req.body.username
-        }
-    }).catch(err => {
-        logger.error("/create user error 500");
-        res.status(500).send({
-            message: err.message || 'Some error occurred while creating the user'
-        });
-    });
-
-    console.log('verified and existing 1');
-
-   
-    if (getUser) {
-        console.log('verified and existing', getUser.dataValues.isVerified);
-        var msg = getUser.dataValues.isVerified ? 'User already exists! & verified' : 'User already exists! & not verified';
-        console.log('verified and existing msg' ,msg);
-        
-        res.status(400).send({
-            message: msg
-        });
-    } else {
-        var user = {
-            id: uuidv4(),
-            first_name: req.body.first_name,
-            last_name: req.body.last_name,
-            password: hash,
-            username: req.body.username,
-            isVerified: false
-        };
-        console.log('above user');
-        User.create(user).then(async udata => {
+async function dynamoDB(username) {
 
                 const randomnanoID = uuidv4();
 
@@ -247,15 +206,7 @@ async function createUser(req, res, next) {
                     isVerified: udata.isVerified
                 });
 
-            })
-            .catch(err => {
-                logger.error(" Error while creating the user! 500");
-                res.status(500).send({
-                    message: err.message || "Some error occurred while creating the user!"
-                });
-            });
-    }
-}
+            }
 
 
 
