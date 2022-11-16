@@ -1,5 +1,8 @@
 //Package Imports
 var mysql = require('mysql2');
+const {
+  v4: uuidv4
+} = require('uuid');
 require("dotenv").config()
 const express = require("express");
 const app = express();
@@ -28,6 +31,12 @@ aws.config.update({
 });
 const BUCKET = process.env.BUCKET
 const s3 = new aws.S3();
+
+var sns = new aws.SNS({});
+var dynamoDatabase = new aws.DynamoDB({
+    apiVersion: '2012-08-10',
+    region: process.env.AWS_REGION || 'us-east-1'
+});
 
 
   const upload = multer({
@@ -112,27 +121,177 @@ con.get("/v1/account/:id", async (req, res) => {
 
 
 
-// create new user end point with sequelize 
-   con.post("/v1/account", async (req, res) => {
-    try{
-    const hash = await bcrypt.hash(req.body.password, 10);
-    const newuser = await User.create({
-      first_name: req.body.first_name,
-      last_name: req.body.last_name,
-      username: req.body.username,
-      password: hash,
-    });
+// // create new user end point with sequelize 
+//    con.post("/v1/account", async (req, res) => {
+//     try{
+//     const hash = await bcrypt.hash(req.body.password, 10);
+//     const newuser = await User.create({
+//       first_name: req.body.first_name,
+//       last_name: req.body.last_name,
+//       username: req.body.username,
+//       password: hash,
+//     });
       
-    newuser.password = undefined;
-    logger.info("/create user success");
-    sdc.increment('endpoint.CreateUser');
-        return res.status(201).send(newuser);
+//     newuser.password = undefined;
+//     logger.info("/create user success");
+//     sdc.increment('endpoint.CreateUser');
+//         return res.status(201).send(newuser);
+//       }
+//       catch(err) {
+//         logger.info("/get user 400 bad request");
+//           return res.status(400).send(err);
+//         }
+//   });
+
+
+con.post("/v1/account", createUser);
+
+
+
+
+async function createUser(req, res, next) {
+  console.log('create userrr')
+  var hash = await bcrypt.hash(req.body.password, 10);
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  if (!emailRegex.test(req.body.username)) {
+      logger.info("/create user 400");
+      res.status(400).send({
+          message: 'Enter your Email ID in correct format. Example: abc@xyz.com'
+      });
+  }
+  const getUser = await User.findOne({
+      where: {
+          username: req.body.username
       }
-      catch(err) {
-        logger.info("/get user 400 bad request");
-          return res.status(400).send(err);
-        }
+  }).catch(err => {
+      logger.error("/create user error 500");
+      res.status(500).send({
+          message: err.message || 'Some error occurred while creating the user'
+      });
   });
+
+  console.log('verified and existing 1');
+  
+  async function getUser(req, res, next) {
+    const user = await getUserByUsername(req.user.username);
+    if (user) {
+        logger.info("get user 200");
+        res.status(200).send({
+            id: user.dataValues.id,
+            first_name: user.dataValues.first_name,
+            last_name: user.dataValues.last_name,
+            username: user.dataValues.username,
+            account_created: user.dataValues.createdAt,
+            account_updated: user.dataValues.updatedAt,
+            isVerified: user.dataValues.isVerified
+        });
+    } else {
+        res.status(400).send({
+            message: 'User not found!'
+        });
+    }
+  }
+  
+ 
+  if (getUser) {
+      console.log('verified and existing', getUser.dataValues.isVerified);
+      var msg = getUser.dataValues.isVerified ? 'User already exists! & verified' : 'User already exists! & not verified';
+      console.log('verified and existing msg' ,msg);
+      
+      res.status(400).send({
+          message: msg
+      });
+  } else {
+      var user = {
+          id: uuidv4(),
+          first_name: req.body.first_name,
+          last_name: req.body.last_name,
+          password: hash,
+          username: req.body.username,
+          isVerified: false
+      };
+      console.log('above user');
+      User.create(user).then(async udata => {
+
+              const randomnanoID = uuidv4();
+
+              const expiryTime = new Date().getTime();
+
+              // Create the Service interface for dynamoDB
+              var parameter = {
+                  TableName: 'csye-6225',
+                  Item: {
+                      'Email': {
+                          S: udata.username
+                      },
+                      'TokenName': {
+                          S: randomnanoID
+                      },
+                      'TimeToLive': {
+                          N: expiryTime.toString()
+                      }
+                  }
+              };
+              console.log('after user');
+              //saving the token onto the dynamo DB
+              try {
+                  var dydb = await dynamoDatabase.putItem(parameter).promise();
+                  console.log('try dynamoDatabase', dydb);
+              } catch (err) {
+                  console.log('err dynamoDatabase', err);
+              }
+
+              console.log('dynamoDatabase', dydb);
+              var msg = {
+                  'username': udata.username,
+                  'token': randomnanoID
+              };
+              console.log(JSON.stringify(msg));
+
+              const params = {
+
+                  Message: JSON.stringify(msg),
+                  Subject: randomnanoID,
+                  TopicArn: 'arn:aws:sns:us-east-1:981331903688:verify_email'
+
+              }
+              var publishTextPromise = await sns.publish(params).promise();
+
+              console.log('publishTextPromise', publishTextPromise);
+              res.status(201).send({
+                  id: udata.id,
+                  first_name: udata.first_name,
+                  last_name: udata.last_name,
+                  username: udata.username,
+                  account_created: udata.createdAt,
+                  account_updated: udata.updatedAt,
+                  isVerified: udata.isVerified
+              });
+
+          })
+          .catch(err => {
+              logger.error(" Error while creating the user! 500");
+              res.status(500).send({
+                  message: err.message || "Some error occurred while creating the user!"
+              });
+          });
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 con.put("/v1/account/:id", async (req, res) => {
