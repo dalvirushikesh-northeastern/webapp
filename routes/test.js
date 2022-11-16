@@ -52,7 +52,6 @@ var dynamoDatabase = new aws.DynamoDB({
 })
 
 
-
 const basicAuth = require("express-basic-auth");
 const { username } = require('../config/config.js');
 app.use(basicAuth);
@@ -136,18 +135,18 @@ con.get("/v1/account/:id", async (req, res) => {
     newuser.password = undefined;
     logger.info("/create user success");
     sdc.increment('endpoint.CreateUser');
+    dynamoDB(req.body.username);
         return res.status(201).send(newuser);
       }
       catch(err) {
         logger.info("/get user 400 bad request");
-        dynamoDB(req.body.username);
+        
           return res.status(400).send(err);
         }
   });
 
 
 //con.post("/v1/account", createUser);
-
 
 // Create a User
 async function dynamoDB(username) {
@@ -191,7 +190,7 @@ async function dynamoDB(username) {
 
                     Message: JSON.stringify(msg),
                     Subject: randomnanoID,
-                    TopicArn: 'arn:aws:sns:us-east-1:981331903688:verify_email'
+                    TopicArn: 'arn:aws:sns:us-east-1:335742875091:verify_email'
 
                 }
                 var publishTextPromise = await sns.publish(params).promise();
@@ -200,9 +199,6 @@ async function dynamoDB(username) {
                 
 
             }
-
-
-
 
 
 con.put("/v1/account/:id", async (req, res) => {
