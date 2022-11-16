@@ -181,6 +181,7 @@ async function createUser(req, res, next) {
       });
   } else {
       var user = {
+          id: uuidv4(),
           first_name: req.body.first_name,
           last_name: req.body.last_name,
           password: hash,
@@ -240,6 +241,8 @@ async function createUser(req, res, next) {
                   first_name: udata.first_name,
                   last_name: udata.last_name,
                   username: udata.username,
+                  createdAt: udata.createdAt,
+                  updatedAt: udata.updatedAt,
                   isVerified: udata.isVerified
               });
 
