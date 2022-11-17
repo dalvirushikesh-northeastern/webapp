@@ -122,85 +122,161 @@ con.get("/v1/account/:id", async (req, res) => {
 
 
 // create new user end point with sequelize 
-   con.post("/v1/account", async (req, res) => {
-    try{
-    const hash = await bcrypt.hash(req.body.password, 10);
-    const newuser = await User.create({
-      first_name: req.body.first_name,
-      last_name: req.body.last_name,
-      username: req.body.username,
-      password: hash,
-      isVerified: false,
-    });
+  //  con.post("/v1/account", async (req, res) => {
+  //   try{
+  //   const hash = await bcrypt.hash(req.body.password, 10);
+  //   const newuser = await User.create({
+  //     first_name: req.body.first_name,
+  //     last_name: req.body.last_name,
+  //     username: req.body.username,
+  //     password: hash,
+  //     isVerified: false,
+  //   });
       
     
-    logger.info("/create user success");
-    sdc.increment('endpoint.CreateUser');
-    dynamoDB(req.body.username);
-    newuser.password = undefined;
-        return res.status(201).send(newuser);
-      }
-      catch(err) {
-        logger.info("/get user 400 bad request");
+  //   logger.info("/create user success");
+  //   sdc.increment('endpoint.CreateUser');
+  //   //dynamoDB(req.body.username);
+  //   newuser.password = undefined;
+  //       return res.status(201).send(newuser);
+  //     }
+  //     catch(err) {
+  //       logger.info("/get user 400 bad request");
         
-          return res.status(400).send(err);
-        }
+  //         return res.status(400).send(err);
+  //       }
+  // });
+
+
+
+  con.post("/v1/account", async (req, res) => {
+    sdc.increment("endpoint.postAccount");
+    try {
+      const hash = await bcrypt.hash(req.body.password, 10);
+      const Acc = await User.create({
+        first_name: req.body.first_name,
+        last_name: req.body.last_name,
+        username: req.body.username,
+        password: hash,
+        verifyuser: false,
+      });
+  
+      //To send message to Dynamo DB
+      var dynamoDatabase = new aws.DynamoDB({
+        apiVersion: "2012-08-10",
+        region: "us-east-1",
+      });
+      const elapsedTime = 5 * 60;
+      const initialTime = Math.floor(Date.now() / 1000);
+      const expiryTime = initialTime + elapsedTime;
+      // console.log(nanoid());
+      const randomnanoID = uuidv4();
+      // console.log(nanoid());
+      // Create the Service interface for dynamoDB
+      var parameter = {
+        Item: {
+          TokenName: { S: randomnanoID },
+          TimeToLive: { N: expiryTime.toString() },
+        },
+        TableName: "csye-6225",
+      };
+      //saving the token onto the dynamo DB
+      await dynamoDatabase.putItem(parameter).promise();
+      //To send message onto SNS
+      //var sns = new AWS.SNS({apiVersion: '2010-03-31'});
+      // Create publish parameters
+      // 122596462960
+      // 652427370007
+      var params = {
+        Message: Acc.username,
+        Subject: randomnanoID,
+        TopicArn: "arn:aws:sns:us-east-1:335742875091:verify_email",
+      };
+      //var topicARN= 'arn:aws:sns:us-east-1:172869529067:VerifyingEmail';
+      var publishTextPromise = new aws.SNS({
+        apiVersion: "2010-03-31",
+        region: "us-east-1",
+      });
+      await publishTextPromise.publish(params).promise();
+  
+      Acc.password = undefined;
+      logger.info("postAccount Success");
+      return res.status(201).send(Acc);
+    } catch (e) {
+      console.log(e);
+      logger.error(e);
+      return res.status(400).send("Bad Request");
+    }
   });
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //con.post("/v1/account", createUser);
 
-// Create a User
-async function dynamoDB(username) {
+// // Create a User
+// async function dynamoDB(username) {
 
-                const randomnanoID = uuidv4();
+//                 const randomnanoID = uuidv4();
 
-                const expiryTime = new Date().getTime();
+//                 const expiryTime = new Date().getTime();
 
-                // Create the Service interface for dynamoDB
-                var parameter = {
-                    TableName: 'csye-6225',
-                    Item: {
-                        'Email': {
-                            S: username
-                        },
-                        'TokenName': {
-                            S: randomnanoID
-                        },
-                        'TimeToLive': {
-                            N: expiryTime.toString()
-                        }
-                    }
-                };
-                console.log('after user');
-                //saving the token onto the dynamo DB
-                try {
-                    var dydb = await dynamoDatabase.putItem(parameter).promise();
-                    console.log('try dynamoDatabase', dydb);
-                } catch (err) {
-                    console.log('err dynamoDatabase', err);
-                }
+//                 // Create the Service interface for dynamoDB
+//                 var parameter = {
+//                     TableName: 'csye-6225',
+//                     Item: {
+//                         'Email': {
+//                             S: username
+//                         },
+//                         'TokenName': {
+//                             S: randomnanoID
+//                         },
+//                         'TimeToLive': {
+//                             N: expiryTime.toString()
+//                         }
+//                     }
+//                 };
+//                 console.log('after user');
+//                 //saving the token onto the dynamo DB
+//                 try {
+//                     var dydb = await dynamoDatabase.putItem(parameter).promise();
+//                     console.log('try dynamoDatabase', dydb);
+//                 } catch (err) {
+//                     console.log('err dynamoDatabase', err);
+//                 }
 
-                console.log('dynamoDatabase', dydb);
-                var msg = {
-                    'username': username,
-                    'token': randomnanoID
-                };
-                console.log(JSON.stringify(msg));
+//                 console.log('dynamoDatabase', dydb);
+//                 var msg = {
+//                     'username': username,
+//                     'token': randomnanoID
+//                 };
+//                 console.log(JSON.stringify(msg));
 
-                const params = {
+//                 const params = {
 
-                    Message: JSON.stringify(msg),
-                    Subject: randomnanoID,
-                    TopicArn: 'arn:aws:sns:us-east-1:335742875091:verify_email'
+//                     Message: JSON.stringify(msg),
+//                     Subject: randomnanoID,
+//                     TopicArn: 'arn:aws:sns:us-east-1:335742875091:verify_email'
 
-                }
-                var publishTextPromise = await sns.publish(params).promise();
+//                 }
+//                 var publishTextPromise = await sns.publish(params).promise();
 
-                console.log('publishTextPromise', publishTextPromise);
+//                 console.log('publishTextPromise', publishTextPromise);
                 
 
-            }
+//             }
 
 
 con.get('/v1/account/verifyUserEmail', (req, res) => {
