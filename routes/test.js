@@ -200,7 +200,6 @@ async function dynamoDB(username) {
 
             }
 
-
 con.get('/v1/account/verifyUserEmail', (req, res) => {
   logger.info("inside verifyUserEmail");
   verifyUser(req, res);
