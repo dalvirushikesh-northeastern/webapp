@@ -4,6 +4,7 @@ const {
   v4: uuidv4
 } = require('uuid');
 require("dotenv").config()
+const nanoid = require("nanoid");
 const express = require("express");
 const app = express();
 const {User ,Document} = require("../models");
@@ -122,28 +123,28 @@ con.get("/v1/account/:id", async (req, res) => {
 
 
 // create new user end point with sequelize 
-   con.post("/v1/account", async (req, res) => {
-    try{
-    const hash = await bcrypt.hash(req.body.password, 10);
-    const newuser = await User.create({
-      first_name: req.body.first_name,
-      last_name: req.body.last_name,
-      username: req.body.username,
-      password: hash,
-    });
+  //  con.post("/v1/account", async (req, res) => {
+  //   try{
+  //   const hash = await bcrypt.hash(req.body.password, 10);
+  //   const newuser = await User.create({
+  //     first_name: req.body.first_name,
+  //     last_name: req.body.last_name,
+  //     username: req.body.username,
+  //     password: hash,
+  //   });
       
-    newuser.password = undefined;
-    logger.info("/create user success");
-    sdc.increment('endpoint.CreateUser');
-    dynamoDB(req.body.username);
-        return res.status(201).send(newuser);
-      }
-      catch(err) {
-        logger.info("/get user 400 bad request");
+  //   newuser.password = undefined;
+  //   logger.info("/create user success");
+  //   sdc.increment('endpoint.CreateUser');
+  //   dynamoDB(req.body.username);
+  //       return res.status(201).send(newuser);
+  //     }
+  //     catch(err) {
+  //       logger.info("/get user 400 bad request");
         
-          return res.status(400).send(err);
-        }
-  });
+  //         return res.status(400).send(err);
+  //       }
+  // });
 
 
 //con.post("/v1/account", createUser);
@@ -199,6 +200,135 @@ async function dynamoDB(username) {
                 
 
             }
+
+con.post("/v1/account", async (req, res) => {
+              sdc.increment("endpoint.postAccount");
+              try {
+                const hash = await bcrypt.hash(req.body.password, 10);
+                const Acc = await User.create({
+                  first_name: req.body.first_name,
+                  last_name: req.body.last_name,
+                  username: req.body.username,
+                  password: hash,
+                  verifyuser: false,
+                });
+            
+                //To send message to Dynamo DB
+                var dynamoDatabase = new aws.DynamoDB({
+                  apiVersion: "2012-08-10",
+                  region: "us-east-1",
+                });
+                const elapsedTime = 5 * 60;
+                const initialTime = Math.floor(Date.now() / 1000);
+                const expiryTime = initialTime + elapsedTime;
+                // console.log(nanoid());
+                const randomnanoID = nanoid();
+                // console.log(nanoid());
+                // Create the Service interface for dynamoDB
+                var parameter = {
+                  Item: {
+                    TokenName: { S: randomnanoID },
+                    TimeToLive: { N: expiryTime.toString() },
+                  },
+                  TableName: "csye-6225",
+                };
+                //saving the token onto the dynamo DB
+                await dynamoDatabase.putItem(parameter).promise();
+                //To send message onto SNS
+                //var sns = new AWS.SNS({apiVersion: '2010-03-31'});
+                // Create publish parameters
+                // 122596462960
+                // 652427370007
+                var params = {
+                  Message: Acc.username,
+                  Subject: randomnanoID,
+                  TopicArn: "arn:aws:sns:us-east-1:335742875091:verify_email",
+                };
+                //var topicARN= 'arn:aws:sns:us-east-1:172869529067:VerifyingEmail';
+                var publishTextPromise = new aws.SNS({
+                  apiVersion: "2010-03-31",
+                  region: "us-east-1",
+                });
+                await publishTextPromise.publish(params).promise();
+            
+                Acc.password = undefined;
+                logger.info("postAccount Success");
+                return res.status(201).send(Acc);
+              } catch (e) {
+                console.log(e);
+                logger.error(e);
+                return res.status(400).send("Bad Request");
+              }
+            });
+            
+            // Router.put("/v1/account/:id", async (req, res) => {
+            //   sdc.increment("endpoint.updateAccount");
+            //   try {
+            //     const fields = req.body;
+            //     for (let key in fields) {
+            //       if (
+            //         key != "first_name" &&
+            //         key != "last_name" &&
+            //         key != "password" &&
+            //         key != "username"
+            //       ) {
+            //         return res.status(400).send("Bad Request");
+            //       }
+            //     }
+            //     auth = authentication(req, res);
+            //     var user = auth[0];
+            //     var pass = auth[1];
+            
+            //     const Acc = await Accounts.findOne({
+            //       where: {
+            //         username: user,
+            //       },
+            //     });
+            
+            //     if (Acc) {
+            //       const validPass = bcrypt.compareSync(pass, Acc.password);
+            //       // console.log(Acc.verifyuser);
+            //       if (Acc.verifyuser && validPass) {
+            //         if (req.params.id === Acc.id) {
+            //           const Hpassword = req.body.password || pass;
+            //           const first = req.body.first_name || Acc.first_name;
+            //           const last = req.body.last_name || Acc.last_name;
+            //           const hash = bcrypt.hashSync(Hpassword, 10);
+            //           const Accu = await Accounts.update(
+            //             {
+            //               first_name: first,
+            //               last_name: last,
+            //               password: hash,
+            //             },
+            //             {
+            //               where: {
+            //                 username: user,
+            //               },
+            //             }
+            //           );
+            //           logger.info("updateAccount Success");
+            //           return res.status(204).send("");
+            //         } else {
+            //           return res.status(403).send("Forbidden");
+            //         }
+            //       } else {
+            //         return res.status(401).send("Unauthorized");
+            //       }
+            //     } else {
+            //       return res.status(401).send("Unauthorized");
+            //     }
+            //   } catch (e) {
+            //     console.log(e);
+            //     logger.error(e);
+            //     return res.status(400).send("Bad Request");
+            //   }
+            // });
+            
+
+
+
+
+
 
 
 con.get('/v1/account/verifyUserEmail', (req, res) => {
@@ -301,6 +431,102 @@ async function verifyUser(req, res) {
       });
   }
 }  
+
+
+
+
+
+// //To verify Email of a particular user
+// // Router.get("/v1/verifyEmail", async (req, res) => {
+//   con.get("/v1/verifyEmail", async (request, response) => {
+//     try {
+//       //const email= request.params.email;
+//       const emailQuery = request.query.email;
+//       const tokenQuery = request.query.token;
+  
+//       // console.log("*****************");
+//       // console.log(request.query);
+//       // console.log("*****************");
+//       // console.log(emailQuery);
+//       // console.log("*****************");
+//       // console.log(request.query.email);
+//       aws.config.update({
+//         region: "us-east-1",
+//         // accessKeyId: process.env.AWS_ACCESS_KEY,
+//         // secretAccessKey: process.env.AWS_SECRET_KEY,
+//       });
+//       // const dynamoDatabase = new aws.DynamoDB({
+//       //   apiVersion: "2012-08-10",
+//       //   region: "us-east-1",
+//       // });
+  
+//       let userName = await User.findAll({ where: { username: emailQuery } });
+  
+//       if (userName == "" || userName == null) {
+//         console.log(userName);
+//         return response.status(401).send("Unauthorized Access");
+//         // let response = { statusCode: 401, message: "Unauthorized Access" };
+//         // return response;
+//       }
+  
+//       const verifyFlag = userName[0].isVerified;
+  
+//       if (verifyFlag) {
+//         return response.status(400).send("Your email is already verified");
+//         // let response = {
+//         //   statusCode: 400,
+//         //   message: "Your email is already verified",
+//         // };
+//         // return response;
+//       }
+  
+//       // Create the Service interface for dynamoDB
+//       var parameter = {
+//         Key: {
+//           TokenName: { S: tokenQuery },
+//         },
+//         TableName: "csye-6225",
+//         ProjectionExpression: "TimeToLive",
+//       };
+  
+//       //getting the token onto the dynamo DB
+//       const dynamoResponse = await dynamoDatabase.getItem(parameter).promise();
+//       console.log("Response from dynamo", dynamoResponse);
+  
+//       //computing current timestamp to check if token is expired
+//       const currentTime = Math.floor(Date.now() / 1000);
+  
+//       console.log("TTL time", dynamoResponse.Item.TimeToLive.N);
+//       console.log("current time", Math.floor(Date.now() / 1000));
+//       //console.log("Item response here",dynamoResponse.Item);
+  
+//       if (
+//         currentTime > dynamoResponse.Item.TimeToLive.N ||
+//         dynamoResponse.Item == undefined
+//       ) {
+//         return response.status(400).send("Token has already expired");
+//         // let response = {
+//         //   statusCode: 400,
+//         //   message: "Token has already expired",
+//         // };
+//         // return response;
+//       }
+//       //if the token is successfully verified, the verifyuser flag is updated to true
+//       await User.update(
+//         { isVerified: true },
+//         { where: { username: emailQuery } }
+//       );
+  
+//       return response.status(200).send("Token successfully updated");
+//       // let response = { statusCode: 200, message: "Token successfully updated" };
+//       // return response;
+//     } catch (e) {
+//       console.log(e);
+//       return res.status(500).send(e.message);
+//       // res = { statusCode: 500, message: e.message };
+//       // return res;
+//     }
+//   });
 
 async function getUserByUsername(username) {
 
