@@ -153,7 +153,7 @@ async function dynamoDB(username) {
 
                 const randomnanoID = uuidv4();
 
-                const expiryTime = new Date().getTime();
+                const expiryTime = new Date();
 
                 // Create the Service interface for dynamoDB
                 var parameter = {
