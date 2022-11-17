@@ -200,8 +200,9 @@ async function dynamoDB(username) {
 
             }
 
-con.get('/v1/account/verifyUserEmail', (req, res) => {
+con.get('/v1/verifyUserEmail', (req, res) => {
   logger.info("inside verifyUserEmail");
+  
   verifyUser(req, res);
   })
 // Verify user
@@ -398,7 +399,6 @@ async function verifyUser(req, res) {
 //   });
 
 async function getUserByUsername(username) {
-
   return User.findOne({
       where: {
           username: username
