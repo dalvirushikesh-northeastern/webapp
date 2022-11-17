@@ -27,23 +27,19 @@ module.exports = (sequelize , DataTypes) =>{
         type : DataTypes.STRING,
         allowNull: false
     },
-    verifyuser: {
-
+    isVerified: {
         type: DataTypes.BOOLEAN,
-
-      },
-
-    },
-    
-        {
-
-            createdAt: "account_created",
-      
-            updatedAt: "account_updated",
-      
-          }
-    
-    );
+        
+              },
+            },
+                {
+                    createdAt: "account_created",
+        
+                    updatedAt: "account_updated",
+        
+                  }
+        
+            );
     
     return User;
     };

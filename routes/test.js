@@ -4,7 +4,6 @@ const {
   v4: uuidv4
 } = require('uuid');
 require("dotenv").config()
-const nanoid = require("nanoid");
 const express = require("express");
 const app = express();
 const {User ,Document} = require("../models");
@@ -123,28 +122,30 @@ con.get("/v1/account/:id", async (req, res) => {
 
 
 // create new user end point with sequelize 
-  //  con.post("/v1/account", async (req, res) => {
-  //   try{
-  //   const hash = await bcrypt.hash(req.body.password, 10);
-  //   const newuser = await User.create({
-  //     first_name: req.body.first_name,
-  //     last_name: req.body.last_name,
-  //     username: req.body.username,
-  //     password: hash,
-  //   });
+   con.post("/v1/account", async (req, res) => {
+    try{
+    const hash = await bcrypt.hash(req.body.password, 10);
+    const newuser = await User.create({
+      first_name: req.body.first_name,
+      last_name: req.body.last_name,
+      username: req.body.username,
+      password: hash,
+      isVerified: false,
+    });
       
-  //   newuser.password = undefined;
-  //   logger.info("/create user success");
-  //   sdc.increment('endpoint.CreateUser');
-  //   dynamoDB(req.body.username);
-  //       return res.status(201).send(newuser);
-  //     }
-  //     catch(err) {
-  //       logger.info("/get user 400 bad request");
+    
+    logger.info("/create user success");
+    sdc.increment('endpoint.CreateUser');
+    dynamoDB(req.body.username);
+    newuser.password = undefined;
+        return res.status(201).send(newuser);
+      }
+      catch(err) {
+        logger.info("/get user 400 bad request");
         
-  //         return res.status(400).send(err);
-  //       }
-  // });
+          return res.status(400).send(err);
+        }
+  });
 
 
 //con.post("/v1/account", createUser);
@@ -200,135 +201,6 @@ async function dynamoDB(username) {
                 
 
             }
-
-con.post("/v1/account", async (req, res) => {
-              sdc.increment("endpoint.postAccount");
-              try {
-                const hash = await bcrypt.hash(req.body.password, 10);
-                const Acc = await User.create({
-                  first_name: req.body.first_name,
-                  last_name: req.body.last_name,
-                  username: req.body.username,
-                  password: hash,
-                  verifyuser: false,
-                });
-            
-                //To send message to Dynamo DB
-                var dynamoDatabase = new aws.DynamoDB({
-                  apiVersion: "2012-08-10",
-                  region: "us-east-1",
-                });
-                const elapsedTime = 5 * 60;
-                const initialTime = Math.floor(Date.now() / 1000);
-                const expiryTime = initialTime + elapsedTime;
-                // console.log(nanoid());
-                const randomnanoID = nanoid();
-                // console.log(nanoid());
-                // Create the Service interface for dynamoDB
-                var parameter = {
-                  Item: {
-                    TokenName: { S: randomnanoID },
-                    TimeToLive: { N: expiryTime.toString() },
-                  },
-                  TableName: "csye-6225",
-                };
-                //saving the token onto the dynamo DB
-                await dynamoDatabase.putItem(parameter).promise();
-                //To send message onto SNS
-                //var sns = new AWS.SNS({apiVersion: '2010-03-31'});
-                // Create publish parameters
-                // 122596462960
-                // 652427370007
-                var params = {
-                  Message: Acc.username,
-                  Subject: randomnanoID,
-                  TopicArn: "arn:aws:sns:us-east-1:335742875091:verify_email",
-                };
-                //var topicARN= 'arn:aws:sns:us-east-1:172869529067:VerifyingEmail';
-                var publishTextPromise = new aws.SNS({
-                  apiVersion: "2010-03-31",
-                  region: "us-east-1",
-                });
-                await publishTextPromise.publish(params).promise();
-            
-                Acc.password = undefined;
-                logger.info("postAccount Success");
-                return res.status(201).send(Acc);
-              } catch (e) {
-                console.log(e);
-                logger.error(e);
-                return res.status(400).send("Bad Request");
-              }
-            });
-            
-            // Router.put("/v1/account/:id", async (req, res) => {
-            //   sdc.increment("endpoint.updateAccount");
-            //   try {
-            //     const fields = req.body;
-            //     for (let key in fields) {
-            //       if (
-            //         key != "first_name" &&
-            //         key != "last_name" &&
-            //         key != "password" &&
-            //         key != "username"
-            //       ) {
-            //         return res.status(400).send("Bad Request");
-            //       }
-            //     }
-            //     auth = authentication(req, res);
-            //     var user = auth[0];
-            //     var pass = auth[1];
-            
-            //     const Acc = await Accounts.findOne({
-            //       where: {
-            //         username: user,
-            //       },
-            //     });
-            
-            //     if (Acc) {
-            //       const validPass = bcrypt.compareSync(pass, Acc.password);
-            //       // console.log(Acc.verifyuser);
-            //       if (Acc.verifyuser && validPass) {
-            //         if (req.params.id === Acc.id) {
-            //           const Hpassword = req.body.password || pass;
-            //           const first = req.body.first_name || Acc.first_name;
-            //           const last = req.body.last_name || Acc.last_name;
-            //           const hash = bcrypt.hashSync(Hpassword, 10);
-            //           const Accu = await Accounts.update(
-            //             {
-            //               first_name: first,
-            //               last_name: last,
-            //               password: hash,
-            //             },
-            //             {
-            //               where: {
-            //                 username: user,
-            //               },
-            //             }
-            //           );
-            //           logger.info("updateAccount Success");
-            //           return res.status(204).send("");
-            //         } else {
-            //           return res.status(403).send("Forbidden");
-            //         }
-            //       } else {
-            //         return res.status(401).send("Unauthorized");
-            //       }
-            //     } else {
-            //       return res.status(401).send("Unauthorized");
-            //     }
-            //   } catch (e) {
-            //     console.log(e);
-            //     logger.error(e);
-            //     return res.status(400).send("Bad Request");
-            //   }
-            // });
-            
-
-
-
-
-
 
 
 con.get('/v1/account/verifyUserEmail', (req, res) => {
