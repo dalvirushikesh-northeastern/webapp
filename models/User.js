@@ -29,14 +29,17 @@ module.exports = (sequelize , DataTypes) =>{
     },
     isVerified: {
         type: DataTypes.BOOLEAN,
-        defaultValue: false    
-    }
-    },
-    {
-    createdAt: false,
-    updatedAt: false
-    
-    });
+        
+              },
+            },
+                {
+                    createdAt: "account_created",
+        
+                    updatedAt: "account_updated",
+        
+                  }
+        
+            );
     
     return User;
     };
