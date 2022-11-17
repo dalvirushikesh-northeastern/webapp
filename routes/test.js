@@ -200,11 +200,17 @@ async function dynamoDB(username) {
 
             }
 
-con.get("/v1/account/verifyUserEmail", verifyUser);
+
+con.get('/v1/account/verifyUserEmail', (req, res) => {
+  logger.info("inside verifyUserEmail");
+  verifyUser(req, res);
+  })
 // Verify user
-async function verifyUser(req, res, next) {
+async function verifyUser(req, res) {
+  logger.info("/get user 400 bad request");
   console.log('verifyUser :');
   console.log('verifyUser :', req.query.email);
+  logger.info("/verify user success",req.query.email);
   const user = await getUserByUsername(req.query.email);
   if (user) {
       console.log('got user  :');
@@ -225,6 +231,7 @@ async function verifyUser(req, res, next) {
                   }
               }
           };
+          
           console.log('got user  param:');
           // Call DynamoDB to read the item from the table
 
