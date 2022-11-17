@@ -153,7 +153,7 @@ async function dynamoDB(username) {
 
                 const randomnanoID = uuidv4();
 
-                const expiryTime = new Date();
+                const expiryTime = new Date().getTime();
 
                 // Create the Service interface for dynamoDB
                 var parameter = {
@@ -305,99 +305,6 @@ async function verifyUser(req, res) {
 
 
 
-
-// //To verify Email of a particular user
-// // Router.get("/v1/verifyEmail", async (req, res) => {
-//   con.get("/v1/verifyEmail", async (request, response) => {
-//     try {
-//       //const email= request.params.email;
-//       const emailQuery = request.query.email;
-//       const tokenQuery = request.query.token;
-  
-//       // console.log("*****************");
-//       // console.log(request.query);
-//       // console.log("*****************");
-//       // console.log(emailQuery);
-//       // console.log("*****************");
-//       // console.log(request.query.email);
-//       aws.config.update({
-//         region: "us-east-1",
-//         // accessKeyId: process.env.AWS_ACCESS_KEY,
-//         // secretAccessKey: process.env.AWS_SECRET_KEY,
-//       });
-//       // const dynamoDatabase = new aws.DynamoDB({
-//       //   apiVersion: "2012-08-10",
-//       //   region: "us-east-1",
-//       // });
-  
-//       let userName = await User.findAll({ where: { username: emailQuery } });
-  
-//       if (userName == "" || userName == null) {
-//         console.log(userName);
-//         return response.status(401).send("Unauthorized Access");
-//         // let response = { statusCode: 401, message: "Unauthorized Access" };
-//         // return response;
-//       }
-  
-//       const verifyFlag = userName[0].isVerified;
-  
-//       if (verifyFlag) {
-//         return response.status(400).send("Your email is already verified");
-//         // let response = {
-//         //   statusCode: 400,
-//         //   message: "Your email is already verified",
-//         // };
-//         // return response;
-//       }
-  
-//       // Create the Service interface for dynamoDB
-//       var parameter = {
-//         Key: {
-//           TokenName: { S: tokenQuery },
-//         },
-//         TableName: "csye-6225",
-//         ProjectionExpression: "TimeToLive",
-//       };
-  
-//       //getting the token onto the dynamo DB
-//       const dynamoResponse = await dynamoDatabase.getItem(parameter).promise();
-//       console.log("Response from dynamo", dynamoResponse);
-  
-//       //computing current timestamp to check if token is expired
-//       const currentTime = Math.floor(Date.now() / 1000);
-  
-//       console.log("TTL time", dynamoResponse.Item.TimeToLive.N);
-//       console.log("current time", Math.floor(Date.now() / 1000));
-//       //console.log("Item response here",dynamoResponse.Item);
-  
-//       if (
-//         currentTime > dynamoResponse.Item.TimeToLive.N ||
-//         dynamoResponse.Item == undefined
-//       ) {
-//         return response.status(400).send("Token has already expired");
-//         // let response = {
-//         //   statusCode: 400,
-//         //   message: "Token has already expired",
-//         // };
-//         // return response;
-//       }
-//       //if the token is successfully verified, the verifyuser flag is updated to true
-//       await User.update(
-//         { isVerified: true },
-//         { where: { username: emailQuery } }
-//       );
-  
-//       return response.status(200).send("Token successfully updated");
-//       // let response = { statusCode: 200, message: "Token successfully updated" };
-//       // return response;
-//     } catch (e) {
-//       console.log(e);
-//       return res.status(500).send(e.message);
-//       // res = { statusCode: 500, message: e.message };
-//       // return res;
-//     }
-//   });
-
 async function getUserByUsername(username) {
   return User.findOne({
       where: {
@@ -435,7 +342,7 @@ con.put("/v1/account/:id", async (req, res) => {
     if(dbAcc) {
      
         const validPass = bcrypt.compareSync(pass, dbAcc.password);
-        if (validPass) {
+        if (dbAcc.isVerified && validPass) {
           if (req.params.id === dbAcc.id) {
             const Hpassword = req.body.password || pass
             const first = req.body.first_name || dbAcc.first_name
@@ -494,7 +401,7 @@ con.post("/v1/documents", async (req, res) => {
   });
       if (userr) {
         const CorrectPass = bcrypt.compareSync(passWord, userr.password);
-        if (CorrectPass) {     
+        if (userr.isVerified && CorrectPass) {     
           Ufile(req, res, async (err) => {
             if (err) {
               logger.info("/doc create  400 bad request");
@@ -541,7 +448,7 @@ con.get("/v1/documents", async (req, res) => {
   });
       if (userr) {
         const CorrectPass = bcrypt.compareSync(passWord, userr.password);
-        if (CorrectPass) {     
+        if (userr.isVerified && CorrectPass) {     
           
             const docx = await Document.findAll({
               where: {
@@ -592,7 +499,7 @@ con.get("/v1/documents/:doc_id", async (req, res) => {
   });
       if (userr) {
         const CorrectPass = bcrypt.compareSync(passWord, userr.password);
-        if (CorrectPass) {    
+        if (userr.isVerified && CorrectPass) {    
           const document_id = req.params.doc_id; 
             const docx = await Document.findOne({
               where: {
@@ -643,7 +550,7 @@ con.delete("/v1/documents/:doc_id", async (req, res) => {
       });
           if (userr) {
             const CorrectPass = bcrypt.compareSync(passWord, userr.password);
-            if (CorrectPass) {    
+            if (userr.isVerified && CorrectPass) {    
               const document_id = req.params.doc_id; 
                 const docx = await Document.findOne({
                   where: {
