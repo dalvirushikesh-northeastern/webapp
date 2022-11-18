@@ -92,7 +92,7 @@ con.get("/v1/account/:id", async (req, res) => {
   });
       if (userr) {
         const validPass = bcrypt.compareSync(passWord, userr.password);
-        if (validPass) {
+        if (userr.isVerified && validPass) {
           if (req.params.id === userr.id) {
             userr.password = undefined;
             logger.info("User data fetched successfully");
