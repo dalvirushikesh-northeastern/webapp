@@ -245,7 +245,8 @@ async function verifyUser(req, res) {
                   console.log("Success dynamoDatabase getItem", data.Item);
                   try {
                       var ttl = data.Item.TimeToLive.N;
-                      var curr = new Date().getTime();
+                      var  curr  = Math.round(Date.now() / 1000);
+                      //var curr = new Date().getTime();
                       console.log(ttl);
                       console.log('time diffrence', curr - ttl);
                       var time = (curr - ttl) / 60000;
