@@ -92,7 +92,7 @@ con.get("/v1/account/:id", async (req, res) => {
   });
       if (userr) {
         const validPass = bcrypt.compareSync(passWord, userr.password);
-        if (validPass) {
+        if (userr.isVerified && validPass) {
           if (req.params.id === userr.id) {
             userr.password = undefined;
             logger.info("User data fetched successfully");
@@ -245,7 +245,8 @@ async function verifyUser(req, res) {
                   console.log("Success dynamoDatabase getItem", data.Item);
                   try {
                       var ttl = data.Item.TimeToLive.N;
-                      var curr = new Date().getTime();
+                      var  curr  = Math.round(Date.now() / 1000);
+                      //var curr = new Date().getTime();
                       console.log(ttl);
                       console.log('time diffrence', curr - ttl);
                       var time = (curr - ttl) / 60000;
