@@ -13,9 +13,9 @@ on:
 
     branches: [ main ]
 
-  pull_request:
+  # pull_request:
 
-    branches: [ main ]
+  #   branches: [ main ]
 
 
 
@@ -98,3 +98,15 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
           AWS_REGION: "us-east-1"
+          
+      - name: AWS CLI
+        id: install-aws-cli
+        uses: unfor19/install-aws-cli-action@v1.0.4
+        with:
+          version: 2
+      - run: |
+          aws --version
+          aws ec2 create-launch-template-version --launch-template-name myvpc-launch-template --source-version 1 --launch-template-data "ImageId=$(jq -r '.builds[-1].artifact_id' manifest.json | cut -d ":" -f2)"
+          aws autoscaling update-auto-scaling-group --auto-scaling-group-name myvpc-auto-Scaling-Group --launch-template LaunchTemplateName='myvpc-launch-template',Version='$Latest'          
+          aws autoscaling start-instance-refresh --auto-scaling-group-name myvpc-auto-Scaling-Group
+        shell: bash     
