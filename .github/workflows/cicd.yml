@@ -93,18 +93,18 @@ jobs:
 
         env:
 
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}          
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}          
 
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-          AWS_REGION: ${{ secrets.AWS_REGION }} 
+          aws-region: ${{ secrets.AWS_REGION }} 
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_R }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_R }}
-          AWS_REGION: ${{ secrets.AWS_REGION }} 
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_R }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_R }}
+          aws-region: ${{ secrets.AWS_REGION }} 
 
       - name: AWS CLI
         id: install-aws-cli
