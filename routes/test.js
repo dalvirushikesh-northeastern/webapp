@@ -122,7 +122,7 @@ con.get("/v1/account/:id", async (req, res) => {
 
 
 //create new user end point with sequelize 
-   con.post("/v1/account", async (req, res) => {
+   con.post("/v2/account", async (req, res) => {
     try{
     const hash = await bcrypt.hash(req.body.password, 10);
     const newuser = await User.create({
